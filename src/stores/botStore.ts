@@ -81,7 +81,7 @@ export const useBotStore = create<BotState>()(
       },
     }),
     {
-      name: "seek-bots",
+      name: "koinlab-bots",
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({ bots: state.bots }),
     },

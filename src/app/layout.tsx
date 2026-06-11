@@ -2,8 +2,8 @@ import type { Metadata, Viewport } from 'next';
 import { Providers } from './providers';
 
 export const metadata: Metadata = {
-  title: 'SEEK — 코인 자동매매',
-  description: '지표 기반 자동매매 · 모의거래(테스트) 모드',
+  title: 'KoinLab — 코인 자동매매',
+  description: 'BMB-LAB · 지표 기반 코인 자동매매 · 모의거래(테스트) 모드',
 };
 
 export const viewport: Viewport = {

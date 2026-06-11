@@ -67,8 +67,9 @@ const Wordmark = styled.h1`
   margin: 0;
   font-size: ${({ theme }) => theme.font.size['4xl']};
   font-weight: ${({ theme }) => theme.font.weight.bold};
-  letter-spacing: -2px;
+  letter-spacing: -1px;
   line-height: 1;
+  text-align: center;
   background: ${({ theme }) => theme.gradient.brand};
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -207,8 +208,8 @@ export default function OnboardingPage() {
         {/* Wordmark */}
         <Anim delay={0} style={{ alignItems: 'center' }}>
           <Wordmark>
-            SEEK
-            <WordmarkSub>Protocol</WordmarkSub>
+            KoinLab
+            <WordmarkSub>BMB-LAB</WordmarkSub>
           </Wordmark>
         </Anim>
 

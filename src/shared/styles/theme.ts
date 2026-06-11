@@ -1,6 +1,6 @@
 /**
- * Design tokens — dark, glassmorphic, neon-accent system inspired by the
- * SeekProtocol reference. Consumed via Emotion's <ThemeProvider>; access in any
+ * KoinLab (BMB-LAB) design tokens — dark, glassmorphic, neon-accent system.
+ * Consumed via Emotion's <ThemeProvider>; access in any
  * styled component through `({ theme }) => theme.color.accent.primary`, etc.
  *
  * Treat this as the single source of visual truth. UI components must read from
