@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { useRouter } from "next/navigation";
 import styled from "@emotion/styled";
 import { Screen, AppHeader, IconButton, Icon } from "@/shared/ui";
 import { PortfolioHero } from "@/features/dashboard/components/PortfolioHero";
@@ -27,6 +28,12 @@ const GreetingSubtitle = styled.span`
   color: ${({ theme }) => theme.color.text.low};
 `;
 
+const HeaderActions = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.space(1)};
+`;
+
 const Content = styled.div`
   display: flex;
   flex-direction: column;
@@ -35,6 +42,7 @@ const Content = styled.div`
 `;
 
 export default function DashboardPage() {
+  const router = useRouter();
   return (
     <>
       <AppHeader
@@ -45,9 +53,19 @@ export default function DashboardPage() {
           </GreetingBlock>
         }
         right={
-          <IconButton label="알림" variant="ghost" size={40}>
-            <Icon name="bell" size={20} />
-          </IconButton>
+          <HeaderActions>
+            <IconButton label="알림" variant="ghost" size={40}>
+              <Icon name="bell" size={20} />
+            </IconButton>
+            <IconButton
+              label="설정"
+              variant="ghost"
+              size={40}
+              onClick={() => router.push("/settings")}
+            >
+              <Icon name="settings" size={20} />
+            </IconButton>
+          </HeaderActions>
         }
       />
 

@@ -40,8 +40,12 @@ const Track = styled.div<{ pct: number }>`
 const Input = styled.input`
   position: absolute;
   left: 0;
+  /* Tall, centered hit area so the whole thumb is grabbable (not just the
+     4px track strip). */
+  top: 50%;
+  transform: translateY(-50%);
   width: 100%;
-  height: 4px;
+  height: 24px;
   opacity: 0;
   cursor: pointer;
   margin: 0;
@@ -53,6 +57,9 @@ const Input = styled.input`
 const Thumb = styled.div<{ pct: number }>`
   position: absolute;
   left: calc(${({ pct }) => pct}% - 11px);
+  /* Center the thumb on the 4px track instead of dropping below it. */
+  top: 50%;
+  transform: translateY(-50%);
   width: 22px;
   height: 22px;
   border-radius: ${({ theme }) => theme.radius.circle};

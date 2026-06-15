@@ -2,7 +2,7 @@
 
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import type { Bot, BotStats, BotStatus, SignalEvent, StrategyParams } from "@/types/domain";
+import type { Bot, BotStats, BotStatus, RiskParams, SignalEvent, StrategyParams } from "@/types/domain";
 import { uid } from "@/shared/lib/id";
 
 // ── State shape ──────────────────────────────────────────────────
@@ -12,7 +12,12 @@ interface BotState {
   signals: SignalEvent[];
 
   // Actions
-  createBot: (input: { name: string; market: string; strategy: StrategyParams }) => Bot;
+  createBot: (input: {
+    name: string;
+    market: string;
+    strategy: StrategyParams;
+    risk?: RiskParams;
+  }) => Bot;
   updateBot: (id: string, patch: Partial<Bot>) => void;
   removeBot: (id: string) => void;
   setStatus: (id: string, status: BotStatus) => void;
@@ -34,6 +39,7 @@ export const useBotStore = create<BotState>()(
           name: input.name,
           market: input.market,
           strategy: input.strategy,
+          risk: input.risk,
           status: "running",
           createdAt: Date.now(),
           stats: {

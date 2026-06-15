@@ -164,12 +164,26 @@ export interface BotStats {
   returnRate: number;
 }
 
+/**
+ * Per-bot risk management. Percentages are positive numbers (5 = 5%);
+ * `null` disables that rule. Evaluated against the position's average buy
+ * price on every tick, independent of the strategy signal.
+ */
+export interface RiskParams {
+  /** Sell everything when loss reaches this percentage. */
+  stopLossPct: number | null;
+  /** Sell everything when profit reaches this percentage. */
+  takeProfitPct: number | null;
+}
+
 /** A configured auto-trading bot. */
 export interface Bot {
   id: string;
   name: string;
   market: string;
   strategy: StrategyParams;
+  /** Optional stop-loss / take-profit rules. */
+  risk?: RiskParams;
   status: BotStatus;
   createdAt: number;
   stats: BotStats;

@@ -8,7 +8,9 @@ interface AppFrameProps {
 }
 
 const Outer = styled.div`
-  min-height: 100dvh;
+  /* Exact viewport height (not min-height): the frame never grows with
+     content, so the window never scrolls — <main> is the single scroller. */
+  height: 100dvh;
   width: 100%;
   display: flex;
   justify-content: center;
@@ -19,7 +21,7 @@ const Inner = styled.div`
   position: relative;
   width: 100%;
   max-width: ${({ theme }) => theme.layout.appMaxWidth};
-  min-height: 100dvh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
   overflow: hidden;

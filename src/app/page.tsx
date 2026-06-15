@@ -17,7 +17,12 @@ const fadeUp = keyframes`
 // ── Layout ─────────────────────────────────────────────────────────────────────
 
 const PageRoot = styled.div`
-  min-height: 100dvh;
+  /* The window is locked (body overflow hidden) — this root is the page's
+     own scroll container. */
+  height: 100dvh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
   width: 100%;
   display: flex;
   justify-content: center;

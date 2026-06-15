@@ -28,9 +28,30 @@ pnpm typecheck  # tsc --noEmit
 `.env.example` 를 `.env.local` 로 복사해 사용합니다. 기본값은 테스트 모드입니다.
 
 ```bash
-NEXT_PUBLIC_TRADING_MODE=test   # test | live
+NEXT_PUBLIC_TRADING_MODE=test   # test | live (런타임 토글은 설정 화면에서)
 NEXT_PUBLIC_EXCHANGE=upbit
 ```
+
+## 실거래(LIVE) 모드 — 소액 자동매매
+
+> ⚠️ 실제 자금이 사용됩니다. 정말 작게 시작하세요. 본 앱은 투자 자문을 제공하지 않습니다.
+
+1. 업비트 [Open API 관리](https://upbit.com/mypage/open_api_management)에서 **자산조회 + 주문** 권한으로 키 발급 (가능하면 IP 화이트리스트 설정).
+2. `.env.local` 에 키 입력 후 서버 재시작:
+   ```bash
+   UPBIT_ACCESS_KEY=...
+   UPBIT_SECRET_KEY=...
+   UPBIT_MAX_ORDER_KRW=20000   # 1회 주문 하드캡
+   UPBIT_DAILY_CAP_KRW=50000   # 1일 누적 매수 하드캡
+   ```
+3. 앱 **설정** 화면에서 실거래(LIVE) 토글 ON → 확인창 → 시작.
+
+**보안 구조:** 시크릿 키는 **서버 전용**(`NEXT_PUBLIC_` 미사용)이라 브라우저 번들에 절대 포함되지 않습니다.
+브라우저는 우리 서버의 `/api/upbit/*` 라우트만 호출하고, 서버가 JWT로 서명해 업비트와 통신합니다
+(`src/server/upbit/*`).
+
+**안전장치(서버 강제):** 1회/1일 하드캡 · 실거래 주문 확인창 · 킬스위치(모든 봇 정지+안전모드) ·
+봇 자동매수 기본 OFF(매도 신호만 실행, 자본 보호). 봇 매수 금액은 소액 프리셋(₩5k/10k/20k)으로 제한됩니다.
 
 ## 폴더 구조 (feature-based)
 
@@ -100,7 +121,9 @@ MarketSimulator ──tick──▶ ExchangeAdapter ──ticker──▶ Tradin
 
 ## 로드맵
 
-- [ ] 실거래용 `UpbitExchangeAdapter` 구현 (REST + WebSocket + JWT)
+- [x] 실거래용 `UpbitExchangeAdapter` (서버 라우트 + JWT) · 소액 하드캡 · 킬스위치
+- [x] 실거래 WebSocket 실시간 시세 (자동 재연결, 실패 시 폴링 폴백)
+- [x] 봇 손절/익절 (평균단가 대비 %, 전략 신호와 무관하게 즉시 시장가 매도)
 - [ ] 백테스트 모드 / 전략 성과 리포트
 - [ ] 추가 전략 (볼린저밴드, 그리드, DCA)
 - [ ] 알림(가격/체결) · PWA 설치

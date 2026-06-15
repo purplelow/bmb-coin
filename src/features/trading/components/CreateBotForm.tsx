@@ -7,6 +7,7 @@ import {
   NumberField,
   SegmentedControl,
   Slider,
+  Switch,
   Button,
   SectionHeader,
 } from "@/shared/ui";
@@ -17,7 +18,7 @@ import {
 } from "@/features/trading/strategies";
 import { useBotStore } from "@/stores/botStore";
 import { useUiStore } from "@/stores/uiStore";
-import type { StrategyType, StrategyParams } from "@/types/domain";
+import type { StrategyType, StrategyParams, RiskParams } from "@/types/domain";
 
 // ── Styled ─────────────────────────────────────────────────────────
 
@@ -69,7 +70,9 @@ const MarketChip = styled.button<{ active: boolean }>`
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: ${({ theme }) => theme.space(1)} ${({ theme }) => theme.space(3)};
+  height: 32px;
+  padding: 0 ${({ theme }) => theme.space(3)};
+  line-height: 1;
   border-radius: ${({ theme }) => theme.radius.pill};
   font-family: ${({ theme }) => theme.font.family};
   font-size: ${({ theme }) => theme.font.size.xs};
@@ -115,6 +118,26 @@ const Divider = styled.div`
   background: ${({ theme }) => theme.color.glass.border};
 `;
 
+const RiskRow = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.space(2)};
+`;
+
+const RiskSwitchRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+`;
+
+const RiskHelperText = styled.p`
+  font-family: ${({ theme }) => theme.font.family};
+  font-size: ${({ theme }) => theme.font.size.xs};
+  color: ${({ theme }) => theme.color.text.low};
+  line-height: 1.55;
+  margin: 0;
+`;
+
 // ── Helpers ────────────────────────────────────────────────────────
 
 const STRATEGY_OPTIONS = (Object.keys(STRATEGY_DEFS) as StrategyType[]).map(
@@ -156,6 +179,10 @@ export function CreateBotForm({ onClose }: CreateBotFormProps) {
   const [strategy, setStrategy] = useState<StrategyParams>(
     createDefaultStrategy("ma_cross")
   );
+  const [slOn, setSlOn] = useState(true);
+  const [sl, setSl] = useState(5);
+  const [tpOn, setTpOn] = useState(true);
+  const [tp, setTp] = useState(10);
 
   const createBot = useBotStore((s) => s.createBot);
   const showToast = useUiStore((s) => s.showToast);
@@ -179,10 +206,14 @@ export function CreateBotForm({ onClose }: CreateBotFormProps) {
       showToast("봇 이름을 입력해 주세요.", "danger");
       return;
     }
-    createBot({ name: trimmedName, market, strategy });
+    const risk: RiskParams = {
+      stopLossPct: slOn ? sl : null,
+      takeProfitPct: tpOn ? tp : null,
+    };
+    createBot({ name: trimmedName, market, strategy, risk });
     showToast(`"${trimmedName}" 봇이 생성되었습니다.`, "success");
     onClose();
-  }, [name, market, strategy, createBot, showToast, onClose]);
+  }, [name, market, strategy, slOn, sl, tpOn, tp, createBot, showToast, onClose]);
 
   const def = STRATEGY_DEFS[strategyType];
   const orderAmountField = def.fields.find((f) => f.key === "orderAmount");
@@ -260,6 +291,51 @@ export function CreateBotForm({ onClose }: CreateBotFormProps) {
           })}
         </FieldGroup>
       )}
+
+      <Divider />
+
+      {/* Risk management */}
+      <FieldGroup>
+        <SectionHeader title="리스크 관리" />
+
+        {/* Stop-loss */}
+        <RiskRow>
+          <RiskSwitchRow>
+            <FieldLabel>손절</FieldLabel>
+            <Switch checked={slOn} onChange={setSlOn} />
+          </RiskSwitchRow>
+          {slOn && (
+            <SliderRow>
+              <SliderLabelRow>
+                <FieldLabel>손절 비율</FieldLabel>
+                <SliderValue>-{sl}%</SliderValue>
+              </SliderLabelRow>
+              <Slider min={1} max={30} step={1} value={sl} onChange={setSl} />
+            </SliderRow>
+          )}
+        </RiskRow>
+
+        {/* Take-profit */}
+        <RiskRow>
+          <RiskSwitchRow>
+            <FieldLabel>익절</FieldLabel>
+            <Switch checked={tpOn} onChange={setTpOn} />
+          </RiskSwitchRow>
+          {tpOn && (
+            <SliderRow>
+              <SliderLabelRow>
+                <FieldLabel>익절 비율</FieldLabel>
+                <SliderValue>+{tp}%</SliderValue>
+              </SliderLabelRow>
+              <Slider min={1} max={50} step={1} value={tp} onChange={setTp} />
+            </SliderRow>
+          )}
+        </RiskRow>
+
+        <RiskHelperText>
+          평균 매수가 대비 등락률 기준. 전략 신호와 무관하게 즉시 시장가 매도합니다.
+        </RiskHelperText>
+      </FieldGroup>
 
       {/* Order amount */}
       {orderAmountField !== undefined && (

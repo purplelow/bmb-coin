@@ -19,6 +19,10 @@ export function GlobalStyles() {
         html,
         body {
           height: 100%;
+          /* The window NEVER scrolls — each route owns exactly one internal
+             scroller (app shell <main>, onboarding root, sheet body). This is
+             what prevents double scrollbars / nested wheel chaining. */
+          overflow: hidden;
         }
 
         body {
@@ -29,7 +33,6 @@ export function GlobalStyles() {
           background: ${theme.color.bg.base};
           -webkit-font-smoothing: antialiased;
           text-rendering: optimizeLegibility;
-          /* Lock the page; the app shell scrolls internally for an app feel. */
           overscroll-behavior: none;
         }
 

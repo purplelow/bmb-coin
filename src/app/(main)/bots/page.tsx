@@ -145,6 +145,13 @@ const Spacer = styled.div<{ h: number }>`
   height: ${({ h, theme }) => theme.space(h)};
 `;
 
+const RiskBadgeRow = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: ${({ theme }) => theme.space(1)};
+  margin-top: 2px;
+`;
+
 // ── Status helpers ─────────────────────────────────────────────────
 
 type StatusTone = "up" | "warning" | "neutral";
@@ -194,6 +201,16 @@ function BotCard({ bot, onToggle, onDelete }: BotCardProps) {
             <BotMeta>
               {bot.market} · {stratDef.label}
             </BotMeta>
+            {bot.risk !== undefined && (
+              <RiskBadgeRow>
+                {bot.risk.stopLossPct !== null && (
+                  <Badge tone="down">손절 -{bot.risk.stopLossPct}%</Badge>
+                )}
+                {bot.risk.takeProfitPct !== null && (
+                  <Badge tone="up">익절 +{bot.risk.takeProfitPct}%</Badge>
+                )}
+              </RiskBadgeRow>
+            )}
           </BotInfo>
           <Badge tone={getStatusTone(bot.status)}>
             {getStatusLabel(bot.status)}

@@ -27,6 +27,10 @@ interface BotState {
   deployedCost: number;
   /** Cumulative realized P&L. */
   realizedPnl: number;
+  /** Last stop-loss/take-profit balance check (throttles getBalances calls). */
+  riskCheckedAt: number;
+  /** True while a risk-triggered sell is awaiting fill (prevents double-sells). */
+  riskSellInFlight: boolean;
 }
 
 // ── Engine handlers ──────────────────────────────────────────────
@@ -37,18 +41,37 @@ export interface EngineHandlers {
   onOrder: (o: Order) => void;
 }
 
+/**
+ * Live-trading guardrails consulted on every auto-buy. In test mode the default
+ * policy is permissive; in live mode the bootstrap passes a policy that can
+ * block buys (sell-only safety) and clamp each buy to the small-amount preset.
+ */
+export interface EnginePolicy {
+  /** When false, the engine never auto-buys (it still auto-sells). */
+  canAutoBuy: () => boolean;
+  /** Upper bound (KRW) on a single auto-buy. Infinity = no clamp. */
+  maxBuyAmount: () => number;
+}
+
+const DEFAULT_POLICY: EnginePolicy = {
+  canAutoBuy: () => true,
+  maxBuyAmount: () => Infinity,
+};
+
 // ── TradingEngine ────────────────────────────────────────────────
 
 export class TradingEngine {
   private adapter: ExchangeAdapter;
   private handlers: EngineHandlers;
+  private policy: EnginePolicy;
   private botStates: Map<string, BotState> = new Map();
   private unsubscribe: (() => void) | null = null;
   private started = false;
 
-  constructor(adapter: ExchangeAdapter, handlers: EngineHandlers) {
+  constructor(adapter: ExchangeAdapter, handlers: EngineHandlers, policy?: EnginePolicy) {
     this.adapter = adapter;
     this.handlers = handlers;
+    this.policy = policy ?? DEFAULT_POLICY;
   }
 
   /** Reconcile the internal bot map from the latest store snapshot. */
@@ -74,6 +97,8 @@ export class TradingEngine {
           lastActedCandleTs: 0,
           deployedCost: 0,
           realizedPnl: 0,
+          riskCheckedAt: 0,
+          riskSellInFlight: false,
         });
       }
     }
@@ -132,7 +157,80 @@ export class TradingEngine {
       if (bot.status !== 'running') continue;
       if (bot.market !== ticker.market) continue;
 
+      // Risk rules (stop-loss/take-profit) run on every tick, independent of
+      // candle boundaries and strategy signals — exits must not wait.
+      await this._checkRisk(state, ticker);
       await this._processBotTick(state, ticker);
+    }
+  }
+
+  /**
+   * Stop-loss / take-profit: if the bot's market position (by average buy
+   * price) breaches the configured thresholds, liquidate the position with a
+   * market sell. Selling is always allowed — EnginePolicy only gates buys.
+   */
+  private async _checkRisk(state: BotState, ticker: Ticker): Promise<void> {
+    const { bot } = state;
+    const risk = bot.risk;
+    if (!risk || (risk.stopLossPct == null && risk.takeProfitPct == null)) return;
+    if (state.riskSellInFlight) return;
+
+    // Throttle balance lookups (each one is an API call in live mode).
+    const now = Date.now();
+    if (now - state.riskCheckedAt < 3_000) return;
+    state.riskCheckedAt = now;
+
+    const seedMarket = SEED_MARKET_BY_CODE[bot.market];
+    const baseCurrency = seedMarket?.base ?? (bot.market.split('-')[1] ?? bot.market);
+
+    let balances: Balance[] = [];
+    try {
+      balances = await this.adapter.getBalances();
+    } catch {
+      return;
+    }
+    const baseBalance = balances.find((b) => b.currency === baseCurrency);
+    const qty = baseBalance?.balance ?? 0;
+    const avgBuyPrice = baseBalance?.avgBuyPrice ?? 0;
+    if (qty <= 0 || avgBuyPrice <= 0) return;
+
+    const pnlRate = (ticker.tradePrice - avgBuyPrice) / avgBuyPrice;
+    const pctText = `${pnlRate >= 0 ? '+' : ''}${(pnlRate * 100).toFixed(1)}%`;
+
+    let reason: string | null = null;
+    if (risk.stopLossPct != null && pnlRate <= -risk.stopLossPct / 100) {
+      reason = `손절 (${pctText})`;
+    } else if (risk.takeProfitPct != null && pnlRate >= risk.takeProfitPct / 100) {
+      reason = `익절 (${pctText})`;
+    }
+    if (reason === null) return;
+
+    state.riskSellInFlight = true;
+    try {
+      const order = await this.adapter.placeOrder({
+        market: bot.market,
+        side: 'ask',
+        type: 'market',
+        volume: qty,
+        botId: bot.id,
+      });
+
+      // Live create-order responses may not include fill details yet — fall
+      // back to the ticker price for P&L accounting.
+      const filled = order.executedVolume * order.avgFillPrice;
+      const proceeds = (filled > 0 ? filled : ticker.tradePrice * qty) - order.paidFee;
+      const cost = state.deployedCost > 0 ? state.deployedCost : avgBuyPrice * qty;
+      const pnl = proceeds - cost;
+      state.realizedPnl += pnl;
+      state.deployedCost = 0;
+      // Suppress the strategy's next 'sell' transition — the position is gone.
+      state.lastSignal = 'sell';
+
+      this._emitSignalAndUpdate(state, 'sell', reason, ticker.tradePrice, order, pnl);
+    } catch {
+      // Order failed (e.g. cap/permission) — retry naturally on a later tick.
+    } finally {
+      state.riskSellInFlight = false;
     }
   }
 
@@ -200,6 +298,14 @@ export class TradingEngine {
       seedMarket?.base ?? (bot.market.split('-')[1] ?? bot.market);
 
     if (signal === 'buy' && prevSignal !== 'buy') {
+      // Sell-only safety: in live mode with auto-buy disabled, never open new
+      // positions automatically — only the sell branch below stays active.
+      if (!this.policy.canAutoBuy()) return;
+
+      // Clamp the buy to the live small-amount cap (Infinity in test mode).
+      const effectiveAmount = Math.min(orderAmount, this.policy.maxBuyAmount());
+      if (!Number.isFinite(effectiveAmount) || effectiveAmount <= 0) return;
+
       // Check KRW balance
       let balances: Balance[] = [];
       try {
@@ -210,7 +316,7 @@ export class TradingEngine {
       const krwBalance = balances.find((b) => b.currency === 'KRW');
       const availableKRW = krwBalance?.balance ?? 0;
 
-      if (availableKRW < orderAmount) return;
+      if (availableKRW < effectiveAmount) return;
 
       let order: Order;
       try {
@@ -218,15 +324,17 @@ export class TradingEngine {
           market: bot.market,
           side: 'bid',
           type: 'price',
-          amount: orderAmount,
+          amount: effectiveAmount,
           botId: bot.id,
         });
       } catch {
         return;
       }
 
-      // Track deployed cost
-      state.deployedCost += order.executedVolume * order.avgFillPrice;
+      // Track deployed cost (fall back to the requested amount when the live
+      // create-response doesn't yet include fill details).
+      const spent = order.executedVolume * order.avgFillPrice;
+      state.deployedCost += spent > 0 ? spent : effectiveAmount;
 
       this._emitSignalAndUpdate(state, signal, reason, currentPrice, order);
     } else if (signal === 'sell' && prevSignal !== 'sell') {
@@ -239,6 +347,7 @@ export class TradingEngine {
       }
       const baseBalance = balances.find((b) => b.currency === baseCurrency);
       baseQty = baseBalance?.balance ?? 0;
+      const avgBuyPrice = baseBalance?.avgBuyPrice ?? 0;
 
       if (baseQty <= 0) return;
 
@@ -255,9 +364,12 @@ export class TradingEngine {
         return;
       }
 
-      // Compute realized P&L: proceeds - cost
-      const proceeds = order.executedVolume * order.avgFillPrice - order.paidFee;
-      const cost = state.deployedCost > 0 ? state.deployedCost : 0;
+      // Realized P&L = proceeds - cost. For positions the bot didn't open
+      // (e.g. bought manually), deployedCost is 0 — fall back to the account's
+      // average buy price so the P&L isn't inflated by the full proceeds.
+      const filled = order.executedVolume * order.avgFillPrice;
+      const proceeds = (filled > 0 ? filled : currentPrice * baseQty) - order.paidFee;
+      const cost = state.deployedCost > 0 ? state.deployedCost : avgBuyPrice * baseQty;
       const pnl = proceeds - cost;
       state.realizedPnl += pnl;
       state.deployedCost = 0;

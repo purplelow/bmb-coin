@@ -1,24 +1,28 @@
 /**
  * Exchange adapter factory + public re-exports.
  *
- * Returns MockExchangeAdapter in test mode, UpbitExchangeAdapter otherwise.
- * The singleton is created on first call and reused thereafter.
+ * Mode-aware: returns the Mock adapter in test mode and the Upbit (live) adapter
+ * in live mode, reading the current mode from the settings store at call time.
+ * Each concrete adapter is a lazily-created singleton.
  */
 
-import { isTestMode } from '@/shared/config';
+import { useSettingsStore } from '@/stores/settingsStore';
 import { MockExchangeAdapter } from './mock/MockExchangeAdapter';
 import { UpbitExchangeAdapter } from './upbit/UpbitExchangeAdapter';
+import type { ExchangeAdapter } from './types';
 
 // Re-export the shared interface types for convenience
 export type { ExchangeAdapter, PlaceOrderInput, TickerListener } from './types';
 
-let _adapter: MockExchangeAdapter | UpbitExchangeAdapter | null = null;
+let _mock: MockExchangeAdapter | null = null;
+let _upbit: UpbitExchangeAdapter | null = null;
 
-export function getExchangeAdapter(): MockExchangeAdapter | UpbitExchangeAdapter {
-  if (!_adapter) {
-    _adapter = isTestMode
-      ? new MockExchangeAdapter()
-      : new UpbitExchangeAdapter();
+export function getExchangeAdapter(): ExchangeAdapter {
+  const mode = useSettingsStore.getState().tradingMode;
+  if (mode === 'live') {
+    if (!_upbit) _upbit = new UpbitExchangeAdapter();
+    return _upbit;
   }
-  return _adapter;
+  if (!_mock) _mock = new MockExchangeAdapter();
+  return _mock;
 }
