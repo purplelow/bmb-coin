@@ -1,7 +1,7 @@
 'use client';
 
-import styled from '@emotion/styled';
 import { keyframes } from '@emotion/react';
+import styled from '@emotion/styled';
 
 interface SkeletonProps {
   width?: string | number;
@@ -27,7 +27,7 @@ const SkeletonBlock = styled.span<{
   background: linear-gradient(
     90deg,
     rgba(255, 255, 255, 0.04) 25%,
-    rgba(255, 255, 255, 0.10) 50%,
+    rgba(255, 255, 255, 0.1) 50%,
     rgba(255, 255, 255, 0.04) 75%
   );
   background-size: 800px 100%;

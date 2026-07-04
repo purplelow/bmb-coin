@@ -20,9 +20,13 @@
 
 ```bash
 pnpm install
-pnpm dev        # http://localhost:3000
-pnpm build      # 프로덕션 빌드
-pnpm typecheck  # tsc --noEmit
+pnpm dev           # http://localhost:3000
+pnpm build         # 프로덕션 빌드
+pnpm typecheck     # tsc --noEmit
+pnpm lint          # ESLint 검사 (import 순서·미사용 import 포함)
+pnpm lint:fix      # ESLint 자동 수정
+pnpm format        # Prettier 포맷팅
+pnpm format:check  # 포맷 검사만 (CI용)
 ```
 
 `.env.example` 를 `.env.local` 로 복사해 사용합니다. 기본값은 테스트 모드입니다.
@@ -52,6 +56,18 @@ NEXT_PUBLIC_EXCHANGE=upbit
 
 **안전장치(서버 강제):** 1회/1일 하드캡 · 실거래 주문 확인창 · 킬스위치(모든 봇 정지+안전모드) ·
 봇 자동매수 기본 OFF(매도 신호만 실행, 자본 보호). 봇 매수 금액은 소액 프리셋(₩5k/10k/20k)으로 제한됩니다.
+
+## 회원가입 / 인증
+
+**better-auth + Drizzle + SQLite**(`koinlab.db`, gitignore) 기반. 현재는 **운영자 1인 전용** —
+`MAX_USERS`(기본 1)를 초과하는 가입은 서버에서 거부됩니다.
+
+- 이메일+비밀번호 로그인 기본. 카카오/구글은 `.env.local` 에 OAuth 키를 넣으면 자동 활성화.
+- 앱 페이지는 미들웨어가, **자산/주문/상태 API는 세션 검증**(`requireSession`)이 보호합니다.
+- 봇/설정은 localStorage가 아닌 **DB(user_data)** 에 세션 스코프로 저장됩니다 (기존 localStorage
+  데이터는 최초 1회 자동 이전).
+- 다인용 확장 시: `MAX_USERS` 상향 + 유저별 업비트 키 암호화 저장 설계가 선행돼야 합니다(현재 키는
+  서버 env 1쌍 = 운영자 계정 전용).
 
 ## 폴더 구조 (feature-based)
 
@@ -119,11 +135,21 @@ MarketSimulator ──tick──▶ ExchangeAdapter ──ticker──▶ Tradin
 별도 설정 파일은 필요 없습니다. (원한다면 역할별 영구 서브에이전트를 `.claude/agents/` 에
 정의해 재사용할 수 있습니다.)
 
+## 24시간 무인 매매 (서버 엔진)
+
+실거래(LIVE) 모드의 봇은 **브라우저가 아니라 Next 서버 프로세스 안에서** 실행됩니다
+(`src/server/engine/runner.ts`, `src/instrumentation.ts`에서 부팅 시 자동 기동).
+20초마다 DB의 봇/설정을 읽어 손절/익절 → 전략 신호 순으로 평가하고 서버에서 직접 주문합니다.
+클라이언트 엔진은 테스트(모의) 모드 전용이라 이중 체결이 없습니다. 하트비트는 설정 화면의
+"서버 엔진" 카드(/api/engine/status)에서 확인. **서버 프로세스(컴퓨터)는 켜져 있어야 합니다.**
+
 ## 로드맵
 
 - [x] 실거래용 `UpbitExchangeAdapter` (서버 라우트 + JWT) · 소액 하드캡 · 킬스위치
 - [x] 실거래 WebSocket 실시간 시세 (자동 재연결, 실패 시 폴링 폴백)
 - [x] 봇 손절/익절 (평균단가 대비 %, 전략 신호와 무관하게 즉시 시장가 매도)
+- [x] 회원가입/로그인 (better-auth, 운영자 1인) · 봇/설정 DB 영속화 · API 세션 보호
+- [x] 24시간 무인 매매 서버 엔진
 - [ ] 백테스트 모드 / 전략 성과 리포트
 - [ ] 추가 전략 (볼린저밴드, 그리드, DCA)
-- [ ] 알림(가격/체결) · PWA 설치
+- [ ] 알림(가격/체결) · 클라우드 상시 배포

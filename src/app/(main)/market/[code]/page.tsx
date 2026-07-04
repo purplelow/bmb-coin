@@ -1,20 +1,13 @@
-"use client";
+'use client';
 
-import React, { useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
-import styled from "@emotion/styled";
-import {
-  AppHeader,
-  IconButton,
-  Icon,
-  GlassCard,
-  StatTile,
-  ValueChange,
-} from "@/shared/ui";
-import { useMarketStore, useTicker } from "@/stores/marketStore";
-import { formatPrice, formatKRW } from "@/shared/lib/format";
-import { PriceChart } from "@/features/market/components/PriceChart";
-import { TradePanel } from "@/features/market/components/TradePanel";
+import React, { useEffect } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import styled from '@emotion/styled';
+import { PriceChart } from '@/features/market/components/PriceChart';
+import { TradePanel } from '@/features/market/components/TradePanel';
+import { formatPrice, formatKRW } from '@/shared/lib/format';
+import { AppHeader, IconButton, Icon, GlassCard, StatTile, ValueChange } from '@/shared/ui';
+import { useMarketStore, useTicker } from '@/stores/marketStore';
 
 const PageWrapper = styled.div`
   display: flex;
@@ -79,7 +72,8 @@ export default function MarketDetailPage() {
   const params = useParams();
   const router = useRouter();
   const rawCode = params?.code;
-  const code = typeof rawCode === "string" ? rawCode : Array.isArray(rawCode) ? (rawCode[0] ?? "") : "";
+  const code =
+    typeof rawCode === 'string' ? rawCode : Array.isArray(rawCode) ? (rawCode[0] ?? '') : '';
 
   const candles = useMarketStore((s) => s.candles[code]);
   const loadCandles = useMarketStore((s) => s.loadCandles);
@@ -97,7 +91,7 @@ export default function MarketDetailPage() {
   const lowPrice = ticker?.lowPrice ?? 0;
   const accTradePrice24h = ticker?.accTradePrice24h ?? 0;
 
-  const base = code.replace("KRW-", "");
+  const base = code.replace('KRW-', '');
 
   // Derive Korean name from candles market or code
   const markets = useMarketStore((s) => s.markets);
@@ -105,8 +99,8 @@ export default function MarketDetailPage() {
   const coinName = marketInfo?.koreanName ?? base;
 
   const chartCandles = candles ?? [];
-  const highTone: "up" | "down" | "neutral" = highPrice > 0 ? "up" : "neutral";
-  const lowTone: "up" | "down" | "neutral" = lowPrice > 0 ? "down" : "neutral";
+  const highTone: 'up' | 'down' | 'neutral' = highPrice > 0 ? 'up' : 'neutral';
+  const lowTone: 'up' | 'down' | 'neutral' = lowPrice > 0 ? 'down' : 'neutral';
 
   return (
     <>
@@ -120,8 +114,7 @@ export default function MarketDetailPage() {
           <HeaderTitleWrapper>
             <HeaderCoinName>{coinName}</HeaderCoinName>
             <HeaderPrice>
-              {formatPrice(tradePrice)}{" "}
-              <ValueChange rate={signedChangeRate} size="sm" />
+              {formatPrice(tradePrice)} <ValueChange rate={signedChangeRate} size="sm" />
             </HeaderPrice>
           </HeaderTitleWrapper>
         }
@@ -135,20 +128,9 @@ export default function MarketDetailPage() {
         <ContentWrapper>
           <GlassCard padding={4}>
             <StatsGrid>
-              <StatTile
-                label="24H 고가"
-                value={formatPrice(highPrice)}
-                tone={highTone}
-              />
-              <StatTile
-                label="24H 저가"
-                value={formatPrice(lowPrice)}
-                tone={lowTone}
-              />
-              <StatTile
-                label="거래대금"
-                value={formatKRW(accTradePrice24h, { compact: true })}
-              />
+              <StatTile label="24H 고가" value={formatPrice(highPrice)} tone={highTone} />
+              <StatTile label="24H 저가" value={formatPrice(lowPrice)} tone={lowTone} />
+              <StatTile label="거래대금" value={formatKRW(accTradePrice24h, { compact: true })} />
             </StatsGrid>
           </GlassCard>
 

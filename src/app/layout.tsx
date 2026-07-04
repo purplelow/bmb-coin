@@ -1,5 +1,5 @@
-import type { Metadata, Viewport } from 'next';
 import { Providers } from './providers';
+import type { Metadata, Viewport } from 'next';
 
 export const metadata: Metadata = {
   title: 'KoinLab — 코인 자동매매',

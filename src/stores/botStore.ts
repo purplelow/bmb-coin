@@ -1,9 +1,17 @@
-"use client";
+'use client';
 
-import { create } from "zustand";
-import { persist, createJSONStorage } from "zustand/middleware";
-import type { Bot, BotStats, BotStatus, RiskParams, SignalEvent, StrategyParams } from "@/types/domain";
-import { uid } from "@/shared/lib/id";
+import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
+import { uid } from '@/shared/lib/id';
+import { serverStateStorage } from '@/shared/lib/server-storage';
+import type {
+  Bot,
+  BotStats,
+  BotStatus,
+  RiskParams,
+  SignalEvent,
+  StrategyParams,
+} from '@/types/domain';
 
 // ── State shape ──────────────────────────────────────────────────
 
@@ -35,12 +43,12 @@ export const useBotStore = create<BotState>()(
 
       createBot: (input) => {
         const bot: Bot = {
-          id: uid("bot"),
+          id: uid('bot'),
           name: input.name,
           market: input.market,
           strategy: input.strategy,
           risk: input.risk,
-          status: "running",
+          status: 'running',
           createdAt: Date.now(),
           stats: {
             trades: 0,
@@ -87,8 +95,9 @@ export const useBotStore = create<BotState>()(
       },
     }),
     {
-      name: "koinlab-bots",
-      storage: createJSONStorage(() => localStorage),
+      name: 'koinlab-bots',
+      // DB-backed, session-scoped persistence (migrates old localStorage once).
+      storage: createJSONStorage(() => serverStateStorage('bots', 'koinlab-bots')),
       partialize: (state) => ({ bots: state.bots }),
     },
   ),

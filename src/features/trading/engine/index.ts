@@ -7,14 +7,12 @@
  * Pure TS — no React, no DOM.
  */
 
-import type { Balance, Bot, BotStats, Order, Signal } from '@/types/domain';
-import type { SignalEvent } from '@/types/domain';
+import { evaluateStrategy } from '@/features/trading/strategies';
 import type { ExchangeAdapter } from '@/services/exchange/types';
-import type { Ticker } from '@/types/domain';
 import { SIM } from '@/shared/config';
 import { SEED_MARKET_BY_CODE } from '@/shared/config/markets';
-import { evaluateStrategy } from '@/features/trading/strategies';
 import { uid } from '@/shared/lib/id';
+import type { Balance, Bot, BotStats, Order, Signal , SignalEvent , Ticker } from '@/types/domain';
 
 // ── Internal per-bot state ───────────────────────────────────────
 
@@ -143,12 +141,9 @@ export class TradingEngine {
 
     if (markets.size === 0) return;
 
-    this.unsubscribe = this.adapter.subscribeTickers(
-      Array.from(markets),
-      (ticker: Ticker) => {
-        void this._onTick(ticker);
-      },
-    );
+    this.unsubscribe = this.adapter.subscribeTickers(Array.from(markets), (ticker: Ticker) => {
+      void this._onTick(ticker);
+    });
   }
 
   private async _onTick(ticker: Ticker): Promise<void> {
@@ -181,7 +176,7 @@ export class TradingEngine {
     state.riskCheckedAt = now;
 
     const seedMarket = SEED_MARKET_BY_CODE[bot.market];
-    const baseCurrency = seedMarket?.base ?? (bot.market.split('-')[1] ?? bot.market);
+    const baseCurrency = seedMarket?.base ?? bot.market.split('-')[1] ?? bot.market;
 
     let balances: Balance[] = [];
     try {
@@ -234,10 +229,7 @@ export class TradingEngine {
     }
   }
 
-  private async _processBotTick(
-    state: BotState,
-    ticker: Ticker,
-  ): Promise<void> {
+  private async _processBotTick(state: BotState, ticker: Ticker): Promise<void> {
     const { bot } = state;
 
     // Determine max lookback period
@@ -252,11 +244,7 @@ export class TradingEngine {
     // Fetch candles
     let candles;
     try {
-      candles = await this.adapter.getCandles(
-        bot.market,
-        SIM.candleUnit,
-        lookback,
-      );
+      candles = await this.adapter.getCandles(bot.market, SIM.candleUnit, lookback);
     } catch {
       return;
     }
@@ -294,8 +282,7 @@ export class TradingEngine {
 
     // Derive base currency
     const seedMarket = SEED_MARKET_BY_CODE[bot.market];
-    const baseCurrency =
-      seedMarket?.base ?? (bot.market.split('-')[1] ?? bot.market);
+    const baseCurrency = seedMarket?.base ?? bot.market.split('-')[1] ?? bot.market;
 
     if (signal === 'buy' && prevSignal !== 'buy') {
       // Sell-only safety: in live mode with auto-buy disabled, never open new
@@ -417,10 +404,7 @@ export class TradingEngine {
 
     const realizedPnl = state.realizedPnl;
     const totalDeployed = state.deployedCost;
-    const returnRate =
-      totalDeployed > 0
-        ? realizedPnl / totalDeployed
-        : currentStats.returnRate;
+    const returnRate = totalDeployed > 0 ? realizedPnl / totalDeployed : currentStats.returnRate;
 
     const statsPatch: Partial<BotStats> = {
       trades,

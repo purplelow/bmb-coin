@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { create } from "zustand";
-import type { Market, Ticker, Candle } from "@/types/domain";
-import { getExchangeAdapter } from "@/services/exchange";
-import { SIM } from "@/shared/config";
-import { DEFAULT_MARKET } from "@/shared/config/markets";
+import { create } from 'zustand';
+import { getExchangeAdapter } from '@/services/exchange';
+import { SIM } from '@/shared/config';
+import { DEFAULT_MARKET } from '@/shared/config/markets';
+import type { Market, Ticker, Candle } from '@/types/domain';
 
 // ── State shape ──────────────────────────────────────────────────
 
@@ -13,7 +13,7 @@ interface MarketState {
   tickers: Record<string, Ticker>;
   candles: Record<string, Candle[]>;
   selectedMarket: string;
-  status: "idle" | "loading" | "ready";
+  status: 'idle' | 'loading' | 'ready';
 
   // Actions
   init: () => Promise<void>;
@@ -29,43 +29,57 @@ export const useMarketStore = create<MarketState>((set, get) => ({
   tickers: {},
   candles: {},
   selectedMarket: DEFAULT_MARKET,
-  status: "idle",
+  status: 'idle',
 
   init: async () => {
     const adapter = getExchangeAdapter();
-    set({ status: "loading" });
+    set({ status: 'loading' });
 
-    const markets = await adapter.getMarkets();
-    const codes = markets.map((m) => m.code);
+    try {
+      const markets = await adapter.getMarkets();
+      const codes = markets.map((m) => m.code);
 
-    const [tickerList, ...candleArrays] = await Promise.all([
-      adapter.getTickers(codes),
-      ...codes.map((code) =>
-        adapter.getCandles(code, SIM.candleUnit, SIM.historyLength),
-      ),
-    ]);
-
-    const tickers: Record<string, Ticker> = {};
-    for (const t of tickerList) {
-      tickers[t.market] = t;
-    }
-
-    const candles: Record<string, Candle[]> = {};
-    for (let i = 0; i < codes.length; i++) {
-      const code = codes[i];
-      const arr = candleArrays[i];
-      if (code !== undefined && arr !== undefined) {
-        candles[code] = arr;
+      const tickerList = await adapter.getTickers(codes);
+      const tickers: Record<string, Ticker> = {};
+      for (const t of tickerList) {
+        tickers[t.market] = t;
       }
-    }
 
-    set({
-      markets,
-      tickers,
-      candles,
-      selectedMarket: get().selectedMarket ?? DEFAULT_MARKET,
-      status: "ready",
-    });
+      // Candles are fetched in small chunks: Upbit's public REST API allows
+      // ~10 req/s per IP, so 12+ parallel requests in live mode would 429.
+      // A failed market just loads lazily later via loadCandles().
+      const candles: Record<string, Candle[]> = {};
+      const CHUNK = 5;
+      for (let i = 0; i < codes.length; i += CHUNK) {
+        const chunk = codes.slice(i, i + CHUNK);
+        const results = await Promise.all(
+          chunk.map(async (code) => {
+            try {
+              return await adapter.getCandles(code, SIM.candleUnit, SIM.historyLength);
+            } catch {
+              return [] as Candle[];
+            }
+          }),
+        );
+        chunk.forEach((code, j) => {
+          const arr = results[j];
+          if (arr !== undefined && arr.length > 0) {
+            candles[code] = arr;
+          }
+        });
+      }
+
+      set({
+        markets,
+        tickers,
+        candles,
+        selectedMarket: get().selectedMarket ?? DEFAULT_MARKET,
+        status: 'ready',
+      });
+    } catch {
+      // Total failure (offline / exchange down) — leave retryable, not stuck.
+      set({ status: 'idle' });
+    }
   },
 
   setSelectedMarket: (code: string) => {
@@ -80,14 +94,14 @@ export const useMarketStore = create<MarketState>((set, get) => ({
 
   loadCandles: async (market: string) => {
     const adapter = getExchangeAdapter();
-    const fetched = await adapter.getCandles(
-      market,
-      SIM.candleUnit,
-      SIM.historyLength,
-    );
-    set((state) => ({
-      candles: { ...state.candles, [market]: fetched },
-    }));
+    try {
+      const fetched = await adapter.getCandles(market, SIM.candleUnit, SIM.historyLength);
+      set((state) => ({
+        candles: { ...state.candles, [market]: fetched },
+      }));
+    } catch {
+      // Keep whatever we had; caller retries on next visit.
+    }
   },
 }));
 

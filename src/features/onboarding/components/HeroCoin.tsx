@@ -75,22 +75,9 @@ const CoinDisc = styled.div`
 
   /* 3-D face: layered radial gradients */
   background:
-    radial-gradient(
-      circle at 38% 32%,
-      rgba(255, 255, 255, 0.18) 0%,
-      transparent 52%
-    ),
-    radial-gradient(
-      circle at 62% 68%,
-      rgba(124, 92, 255, 0.28) 0%,
-      transparent 50%
-    ),
-    radial-gradient(
-      circle at 50% 50%,
-      #1c1f35 0%,
-      #0c0e1e 60%,
-      #06070d 100%
-    );
+    radial-gradient(circle at 38% 32%, rgba(255, 255, 255, 0.18) 0%, transparent 52%),
+    radial-gradient(circle at 62% 68%, rgba(124, 92, 255, 0.28) 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, #1c1f35 0%, #0c0e1e 60%, #06070d 100%);
 
   border: 1.5px solid rgba(197, 255, 74, 0.35);
 
@@ -116,7 +103,7 @@ const CoinInner = styled.div`
   background: radial-gradient(
     circle at 40% 35%,
     rgba(197, 255, 74, 0.22) 0%,
-    rgba(57, 229, 255, 0.10) 45%,
+    rgba(57, 229, 255, 0.1) 45%,
     transparent 70%
   );
   border: 1px solid rgba(197, 255, 74, 0.22);
@@ -143,9 +130,24 @@ export function HeroCoin() {
   return (
     <CoinScene aria-hidden="true">
       {/* Ambient glow blobs */}
-      <GlowBlob color="rgba(124, 92, 255, 0.6)" size={110} delay={0} style={{ top: 20, left: 20 }} />
-      <GlowBlob color="rgba(57, 229, 255, 0.45)" size={80} delay={1.4} style={{ bottom: 22, right: 24 }} />
-      <GlowBlob color="rgba(197, 255, 74, 0.35)" size={60} delay={0.7} style={{ bottom: 30, left: 30 }} />
+      <GlowBlob
+        color="rgba(124, 92, 255, 0.6)"
+        size={110}
+        delay={0}
+        style={{ top: 20, left: 20 }}
+      />
+      <GlowBlob
+        color="rgba(57, 229, 255, 0.45)"
+        size={80}
+        delay={1.4}
+        style={{ bottom: 22, right: 24 }}
+      />
+      <GlowBlob
+        color="rgba(197, 255, 74, 0.35)"
+        size={60}
+        delay={0.7}
+        style={{ bottom: 30, left: 30 }}
+      />
 
       {/* Orbit rings */}
       <OrbitRing diameter={162} delay={0} />

@@ -62,15 +62,11 @@ export function assertBuyWithinCaps(amountKRW: number): void {
   }
   const perOrder = maxOrderKRW();
   if (amountKRW > perOrder) {
-    throw new CapError(
-      `1회 주문 한도(₩${perOrder.toLocaleString()})를 초과했습니다.`,
-    );
+    throw new CapError(`1회 주문 한도(₩${perOrder.toLocaleString()})를 초과했습니다.`);
   }
   const remaining = dailyRemaining();
   if (amountKRW > remaining) {
-    throw new CapError(
-      `오늘 매수 한도를 초과했습니다. (남은 한도 ₩${remaining.toLocaleString()})`,
-    );
+    throw new CapError(`오늘 매수 한도를 초과했습니다. (남은 한도 ₩${remaining.toLocaleString()})`);
   }
 }
 

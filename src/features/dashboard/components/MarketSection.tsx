@@ -1,19 +1,12 @@
-"use client";
+'use client';
 
-import React from "react";
-import styled from "@emotion/styled";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import {
-  SectionHeader,
-  GlassCard,
-  ListRow,
-  CoinIcon,
-  ValueChange,
-  Icon,
-} from "@/shared/ui";
-import { useMarkets, useMarketStore } from "@/stores/marketStore";
-import { formatPrice } from "@/shared/lib/format";
+import React from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import styled from '@emotion/styled';
+import { formatPrice } from '@/shared/lib/format';
+import { SectionHeader, GlassCard, ListRow, CoinIcon, ValueChange, Icon } from '@/shared/ui';
+import { useMarkets, useMarketStore } from '@/stores/marketStore';
 
 const Card = styled(GlassCard)`
   padding: 0;
@@ -87,7 +80,7 @@ export function MarketSection() {
       <Card>
         {sorted.map((market, idx) => {
           const ticker = tickers[market.code];
-          const price = ticker ? formatPrice(ticker.tradePrice) : "—";
+          const price = ticker ? formatPrice(ticker.tradePrice) : '—';
           const rate = ticker?.signedChangeRate ?? 0;
 
           return (

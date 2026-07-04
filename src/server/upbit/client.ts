@@ -21,16 +21,10 @@ async function publicGet<T>(path: string): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-async function authGet<T>(
-  path: string,
-  params?: Record<string, string | number>,
-): Promise<T> {
+async function authGet<T>(path: string, params?: Record<string, string | number>): Promise<T> {
   const token = createUpbitToken(params);
   const qs = params
-    ? '?' +
-      new URLSearchParams(
-        Object.entries(params).map(([k, v]) => [k, String(v)]),
-      ).toString()
+    ? '?' + new URLSearchParams(Object.entries(params).map(([k, v]) => [k, String(v)])).toString()
     : '';
   const res = await fetch(`${BASE}${path}${qs}`, {
     headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
@@ -113,11 +107,7 @@ interface UpbitCandle {
   unit: number;
 }
 
-export async function fetchCandles(
-  market: string,
-  unit: number,
-  count: number,
-): Promise<Candle[]> {
+export async function fetchCandles(market: string, unit: number, count: number): Promise<Candle[]> {
   const data = await publicGet<UpbitCandle[]>(
     `/v1/candles/minutes/${unit}?market=${encodeURIComponent(market)}&count=${count}`,
   );

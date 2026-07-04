@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
-import styled from '@emotion/styled';
 import { useTheme } from '@emotion/react';
+import styled from '@emotion/styled';
+import { createPortal } from 'react-dom';
 import { IconButton } from './Button';
 import { Icon } from './Icon';
 
@@ -174,13 +174,7 @@ export function Sheet({ open, onClose, title, children }: SheetProps) {
   return createPortal(
     <>
       <Backdrop style={backdropStyle} onClick={requestClose} />
-      <Panel
-        ref={panelRef}
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-        style={panelStyle}
-      >
+      <Panel ref={panelRef} role="dialog" aria-modal="true" aria-label={title} style={panelStyle}>
         <Grabber
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}

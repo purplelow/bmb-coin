@@ -1,7 +1,10 @@
-"use client";
+'use client';
 
-import React, { useState, useCallback } from "react";
-import styled from "@emotion/styled";
+import React, { useState, useCallback } from 'react';
+import styled from '@emotion/styled';
+import { CreateBotForm } from '@/features/trading/components/CreateBotForm';
+import { STRATEGY_DEFS } from '@/features/trading/strategies';
+import { formatKRW, formatPrice, formatTime } from '@/shared/lib/format';
 import {
   AppHeader,
   Screen,
@@ -16,12 +19,9 @@ import {
   ListRow,
   EmptyState,
   Sheet,
-} from "@/shared/ui";
-import { useBotStore } from "@/stores/botStore";
-import { STRATEGY_DEFS } from "@/features/trading/strategies";
-import { formatKRW, formatPrice, formatTime } from "@/shared/lib/format";
-import type { Bot, BotStatus, SignalEvent } from "@/types/domain";
-import { CreateBotForm } from "@/features/trading/components/CreateBotForm";
+} from '@/shared/ui';
+import { useBotStore } from '@/stores/botStore';
+import type { Bot, BotStatus, SignalEvent } from '@/types/domain';
 
 // ── Styled ─────────────────────────────────────────────────────────
 
@@ -154,18 +154,18 @@ const RiskBadgeRow = styled.div`
 
 // ── Status helpers ─────────────────────────────────────────────────
 
-type StatusTone = "up" | "warning" | "neutral";
+type StatusTone = 'up' | 'warning' | 'neutral';
 
 function getStatusTone(status: BotStatus): StatusTone {
-  if (status === "running") return "up";
-  if (status === "paused") return "warning";
-  return "neutral";
+  if (status === 'running') return 'up';
+  if (status === 'paused') return 'warning';
+  return 'neutral';
 }
 
 function getStatusLabel(status: BotStatus): string {
-  if (status === "running") return "실행중";
-  if (status === "paused") return "일시정지";
-  return "정지";
+  if (status === 'running') return '실행중';
+  if (status === 'paused') return '일시정지';
+  return '정지';
 }
 
 // ── BotCard ────────────────────────────────────────────────────────
@@ -180,8 +180,7 @@ function BotCard({ bot, onToggle, onDelete }: BotCardProps) {
   const stratDef = STRATEGY_DEFS[bot.strategy.type];
 
   const handleToggle = useCallback(() => {
-    const next: BotStatus =
-      bot.status === "running" ? "paused" : "running";
+    const next: BotStatus = bot.status === 'running' ? 'paused' : 'running';
     onToggle(bot.id, next);
   }, [bot.id, bot.status, onToggle]);
 
@@ -189,7 +188,7 @@ function BotCard({ bot, onToggle, onDelete }: BotCardProps) {
     onDelete(bot.id);
   }, [bot.id, onDelete]);
 
-  const isRunning = bot.status === "running";
+  const isRunning = bot.status === 'running';
 
   return (
     <GlassCard padding={4}>
@@ -212,27 +211,17 @@ function BotCard({ bot, onToggle, onDelete }: BotCardProps) {
               </RiskBadgeRow>
             )}
           </BotInfo>
-          <Badge tone={getStatusTone(bot.status)}>
-            {getStatusLabel(bot.status)}
-          </Badge>
+          <Badge tone={getStatusTone(bot.status)}>{getStatusLabel(bot.status)}</Badge>
           <BotControls>
             <IconButton
-              label={isRunning ? "일시정지" : "실행"}
+              label={isRunning ? '일시정지' : '실행'}
               onClick={handleToggle}
               variant="ghost"
               size={36}
             >
-              <Icon
-                name={isRunning ? "pause" : "play"}
-                size={16}
-              />
+              <Icon name={isRunning ? 'pause' : 'play'} size={16} />
             </IconButton>
-            <IconButton
-              label="삭제"
-              onClick={handleDelete}
-              variant="ghost"
-              size={36}
-            >
+            <IconButton label="삭제" onClick={handleDelete} variant="ghost" size={36}>
               <Icon name="trash" size={16} />
             </IconButton>
           </BotControls>
@@ -260,19 +249,14 @@ function BotCard({ bot, onToggle, onDelete }: BotCardProps) {
 
 interface SignalRowProps {
   event: SignalEvent;
-  isLast: boolean;
 }
 
-function SignalRow({ event, isLast }: SignalRowProps) {
-  const isBuy = event.signal === "buy";
+function SignalRow({ event }: SignalRowProps) {
+  const isBuy = event.signal === 'buy';
 
   return (
     <ListRow
-      left={
-        <Badge tone={isBuy ? "up" : "down"}>
-          {isBuy ? "매수" : "매도"}
-        </Badge>
-      }
+      left={<Badge tone={isBuy ? 'up' : 'down'}>{isBuy ? '매수' : '매도'}</Badge>}
       title={event.market}
       subtitle={event.reason}
       right={
@@ -302,30 +286,25 @@ export default function BotsPage() {
     (id: string, status: BotStatus) => {
       setStatus(id, status);
     },
-    [setStatus]
+    [setStatus],
   );
 
   const handleDelete = useCallback(
     (id: string) => {
       removeBot(id);
     },
-    [removeBot]
+    [removeBot],
   );
 
   // Only show non-hold signals (buy/sell) in the log
-  const visibleSignals = signals.filter((s) => s.signal !== "hold");
+  const visibleSignals = signals.filter((s) => s.signal !== 'hold');
 
   return (
     <>
       <AppHeader
         title="자동매매 봇"
         right={
-          <IconButton
-            label="봇 추가"
-            onClick={openSheet}
-            variant="ghost"
-            size={40}
-          >
+          <IconButton label="봇 추가" onClick={openSheet} variant="ghost" size={40}>
             <Icon name="plus" size={20} />
           </IconButton>
         }
@@ -347,12 +326,7 @@ export default function BotsPage() {
           <>
             <BotList>
               {bots.map((bot) => (
-                <BotCard
-                  key={bot.id}
-                  bot={bot}
-                  onToggle={handleToggle}
-                  onDelete={handleDelete}
-                />
+                <BotCard key={bot.id} bot={bot} onToggle={handleToggle} onDelete={handleDelete} />
               ))}
             </BotList>
 
@@ -360,12 +334,8 @@ export default function BotsPage() {
               <SignalSection>
                 <SectionHeader title="신호 로그" />
                 <SignalList>
-                  {visibleSignals.map((event, idx) => (
-                    <SignalRow
-                      key={event.id}
-                      event={event}
-                      isLast={idx === visibleSignals.length - 1}
-                    />
+                  {visibleSignals.map((event) => (
+                    <SignalRow key={event.id} event={event} />
                   ))}
                 </SignalList>
               </SignalSection>

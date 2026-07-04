@@ -32,16 +32,22 @@ const IconWrap = styled.div<{ accentColor: 'primary' | 'secondary' | 'tertiary' 
   flex-shrink: 0;
   background: ${({ accentColor, theme }) => {
     switch (accentColor) {
-      case 'primary':   return theme.color.accent.primarySoft;
-      case 'secondary': return theme.color.accent.secondarySoft;
-      case 'tertiary':  return theme.color.accent.tertiarySoft;
+      case 'primary':
+        return theme.color.accent.primarySoft;
+      case 'secondary':
+        return theme.color.accent.secondarySoft;
+      case 'tertiary':
+        return theme.color.accent.tertiarySoft;
     }
   }};
   color: ${({ accentColor, theme }) => {
     switch (accentColor) {
-      case 'primary':   return theme.color.accent.primary;
-      case 'secondary': return theme.color.accent.secondary;
-      case 'tertiary':  return theme.color.accent.tertiary;
+      case 'primary':
+        return theme.color.accent.primary;
+      case 'secondary':
+        return theme.color.accent.secondary;
+      case 'tertiary':
+        return theme.color.accent.tertiary;
     }
   }};
 `;

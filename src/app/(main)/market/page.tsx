@@ -1,23 +1,16 @@
-"use client";
+'use client';
 
-import React, { useState } from "react";
-import { useRouter } from "next/navigation";
-import styled from "@emotion/styled";
-import {
-  AppHeader,
-  TextField,
-  SegmentedControl,
-  EmptyState,
-  Icon,
-} from "@/shared/ui";
-import { useMarkets } from "@/stores/marketStore";
-import { useMarketStore } from "@/stores/marketStore";
-import { MarketRow } from "@/features/market/components/MarketRow";
+import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import styled from '@emotion/styled';
+import { MarketRow } from '@/features/market/components/MarketRow';
+import { AppHeader, TextField, SegmentedControl, EmptyState, Icon } from '@/shared/ui';
+import { useMarkets , useMarketStore } from '@/stores/marketStore';
 
 const TAB_OPTIONS = [
-  { label: "원화", value: "krw" },
-  { label: "보유", value: "holding" },
-  { label: "관심", value: "watchlist" },
+  { label: '원화', value: 'krw' },
+  { label: '보유', value: 'holding' },
+  { label: '관심', value: 'watchlist' },
 ];
 
 const SearchWrapper = styled.div`
@@ -42,8 +35,8 @@ const Divider = styled.div`
 
 export default function MarketPage() {
   const router = useRouter();
-  const [query, setQuery] = useState("");
-  const [tab, setTab] = useState("krw");
+  const [query, setQuery] = useState('');
+  const [tab, setTab] = useState('krw');
 
   const markets = useMarkets();
   const tickers = useMarketStore((s) => s.tickers);
@@ -74,15 +67,10 @@ export default function MarketPage() {
       </SearchWrapper>
 
       <TabWrapper>
-        <SegmentedControl
-          options={TAB_OPTIONS}
-          value={tab}
-          onChange={setTab}
-          fullWidth
-        />
+        <SegmentedControl options={TAB_OPTIONS} value={tab} onChange={setTab} fullWidth />
       </TabWrapper>
 
-      {tab !== "krw" ? (
+      {tab !== 'krw' ? (
         <EmptyState
           title="준비 중"
           description="이 탭은 아직 지원되지 않습니다."

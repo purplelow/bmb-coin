@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import React from "react";
-import styled from "@emotion/styled";
-import { CoinIcon, Sparkline, ValueChange } from "@/shared/ui";
-import { formatPrice } from "@/shared/lib/format";
-import type { Market, Ticker, Candle } from "@/types/domain";
+import React from 'react';
+import styled from '@emotion/styled';
+import { formatPrice } from '@/shared/lib/format';
+import { CoinIcon, Sparkline, ValueChange } from '@/shared/ui';
+import type { Market, Ticker, Candle } from '@/types/domain';
 
 interface MarketRowProps {
   market: Market;
@@ -82,11 +82,7 @@ export function MarketRow({ market, ticker, candles, onClick }: MarketRowProps) 
   const signedChangeRate = ticker?.signedChangeRate ?? 0;
 
   const sparkColor =
-    signedChangeRate > 0
-      ? "#2FE6A8"
-      : signedChangeRate < 0
-        ? "#FF5B73"
-        : "#98A0B3";
+    signedChangeRate > 0 ? '#2FE6A8' : signedChangeRate < 0 ? '#FF5B73' : '#98A0B3';
 
   return (
     <Row onClick={onClick}>
@@ -97,13 +93,7 @@ export function MarketRow({ market, ticker, candles, onClick }: MarketRowProps) 
       </Content>
       {closes.length >= 2 && (
         <SparklineWrapper>
-          <Sparkline
-            data={closes}
-            width={64}
-            height={28}
-            color={sparkColor}
-            fill
-          />
+          <Sparkline data={closes} width={64} height={28} color={sparkColor} fill />
         </SparklineWrapper>
       )}
       <RightSlot>

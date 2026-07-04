@@ -1,8 +1,8 @@
 'use client';
 
 import React from 'react';
-import styled from '@emotion/styled';
 import { css } from '@emotion/react';
+import styled from '@emotion/styled';
 
 interface GlassCardProps {
   padding?: number;
@@ -12,7 +12,11 @@ interface GlassCardProps {
   children?: React.ReactNode;
 }
 
-const Card = styled.div<{ padding: number; glow: 'none' | 'primary' | 'secondary'; clickable: boolean }>`
+const Card = styled.div<{
+  padding: number;
+  glow: 'none' | 'primary' | 'secondary';
+  clickable: boolean;
+}>`
   background: ${({ theme }) => theme.color.glass.surface};
   border: 1px solid ${({ theme }) => theme.color.glass.border};
   border-radius: ${({ theme }) => theme.radius.lg};

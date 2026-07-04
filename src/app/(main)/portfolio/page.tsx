@@ -1,7 +1,13 @@
-"use client";
+'use client';
 
-import React from "react";
-import styled from "@emotion/styled";
+import React from 'react';
+import styled from '@emotion/styled';
+import {
+  HeroCard,
+  PositionRow,
+  AllocationSection,
+  OrderRow,
+} from '@/features/portfolio/components';
 import {
   AppHeader,
   Screen,
@@ -10,14 +16,8 @@ import {
   Icon,
   GlassCard,
   Divider,
-} from "@/shared/ui";
-import { usePositions, usePortfolioStore } from "@/stores/portfolioStore";
-import {
-  HeroCard,
-  PositionRow,
-  AllocationSection,
-  OrderRow,
-} from "@/features/portfolio/components";
+} from '@/shared/ui';
+import { usePositions, usePortfolioStore } from '@/stores/portfolioStore';
 
 // ── Styled ────────────────────────────────────────────────────────
 

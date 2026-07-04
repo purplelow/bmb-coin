@@ -88,8 +88,7 @@ export function rsi(values: number[], period: number): (number | null)[] {
 
   // First RSI value aligns to index `period` in the output (needs period+1 prices)
   const firstRsiIdx = period;
-  out[firstRsiIdx] =
-    avgLoss === 0 ? 100 : 100 - 100 / (1 + avgGain / avgLoss);
+  out[firstRsiIdx] = avgLoss === 0 ? 100 : 100 - 100 / (1 + avgGain / avgLoss);
 
   // Continue with Wilder smoothing
   for (let i = period + 1; i < values.length; i++) {

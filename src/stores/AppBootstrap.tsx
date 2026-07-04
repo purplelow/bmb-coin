@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import { useEffect } from "react";
-import { getExchangeAdapter } from "@/services/exchange";
-import { TradingEngine, type EnginePolicy } from "@/features/trading/engine";
-import { SEED_MARKETS } from "@/shared/config/markets";
-import { useMarketStore } from "./marketStore";
-import { usePortfolioStore } from "./portfolioStore";
-import { useBotStore } from "./botStore";
-import { useSettingsStore } from "./settingsStore";
+import { useEffect } from 'react';
+import { TradingEngine, type EnginePolicy } from '@/features/trading/engine';
+import { getExchangeAdapter } from '@/services/exchange';
+import { SEED_MARKETS } from '@/shared/config/markets';
+import { useBotStore } from './botStore';
+import { useMarketStore } from './marketStore';
+import { usePortfolioStore } from './portfolioStore';
+import { useSettingsStore } from './settingsStore';
 
 /**
  * Live-trading policy for the engine, read fresh from the settings store:
@@ -18,11 +18,11 @@ import { useSettingsStore } from "./settingsStore";
 const enginePolicy: EnginePolicy = {
   canAutoBuy: () => {
     const s = useSettingsStore.getState();
-    return s.tradingMode === "test" || s.liveAutoBuy;
+    return s.tradingMode === 'test' || s.liveAutoBuy;
   },
   maxBuyAmount: () => {
     const s = useSettingsStore.getState();
-    return s.tradingMode === "live" ? s.orderPreset : Infinity;
+    return s.tradingMode === 'live' ? s.orderPreset : Infinity;
   },
 };
 
@@ -31,21 +31,10 @@ const enginePolicy: EnginePolicy = {
 function startSession(): () => void {
   const adapter = getExchangeAdapter();
   const allMarketCodes = SEED_MARKETS.map((m) => m.code);
+  const isTest = useSettingsStore.getState().tradingMode === 'test';
 
   void useMarketStore.getState().init();
   void usePortfolioStore.getState().refresh();
-
-  const engine = new TradingEngine(
-    adapter,
-    {
-      onSignal: (e) => useBotStore.getState().addSignal(e),
-      onBotUpdate: (id, patch) => useBotStore.getState().updateBot(id, patch),
-      onOrder: (o) => {
-        void usePortfolioStore.getState().addOrder(o);
-      },
-    },
-    enginePolicy,
-  );
 
   const unsubTickers = adapter.subscribeTickers(allMarketCodes, (t) => {
     useMarketStore.getState().applyTicker(t);
@@ -55,17 +44,36 @@ function startSession(): () => void {
     void usePortfolioStore.getState().refresh();
   }, 3000);
 
-  engine.syncBots(useBotStore.getState().bots);
-  const unsubBots = useBotStore.subscribe((s) => {
-    engine.syncBots(s.bots);
-  });
-
-  engine.start();
+  // The in-browser engine only paper-trades (test mode). In LIVE mode the
+  // 24/7 server engine (src/server/engine/runner.ts) is the sole executor —
+  // running both would double-trade real money.
+  let engineTeardown: (() => void) | null = null;
+  if (isTest) {
+    const engine = new TradingEngine(
+      adapter,
+      {
+        onSignal: (e) => useBotStore.getState().addSignal(e),
+        onBotUpdate: (id, patch) => useBotStore.getState().updateBot(id, patch),
+        onOrder: (o) => {
+          void usePortfolioStore.getState().addOrder(o);
+        },
+      },
+      enginePolicy,
+    );
+    engine.syncBots(useBotStore.getState().bots);
+    const unsubBots = useBotStore.subscribe((s) => {
+      engine.syncBots(s.bots);
+    });
+    engine.start();
+    engineTeardown = () => {
+      engine.stop();
+      unsubBots();
+    };
+  }
 
   return () => {
-    engine.stop();
+    engineTeardown?.();
     unsubTickers();
-    unsubBots();
     clearInterval(refreshInterval);
   };
 }

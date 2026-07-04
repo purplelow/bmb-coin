@@ -6,11 +6,11 @@
  * to satisfy the ExchangeAdapter interface.
  */
 
-import type { Balance, Market, Order, Ticker } from '@/types/domain';
 import type { ExchangeAdapter, PlaceOrderInput, TickerListener } from '@/services/exchange/types';
-import { SIM, config } from '@/shared/config';
 import { getSimulator } from '@/services/simulation/MarketSimulator';
+import { SIM, config } from '@/shared/config';
 import { uid } from '@/shared/lib/id';
+import type { Balance, Market, Order, Ticker } from '@/types/domain';
 
 export class MockExchangeAdapter implements ExchangeAdapter {
   readonly id = 'mock';
@@ -188,15 +188,10 @@ export class MockExchangeAdapter implements ExchangeAdapter {
     }
   }
 
-  private _adjustBaseBalance(
-    currency: string,
-    addedVolume: number,
-    fillPrice: number,
-  ): void {
+  private _adjustBaseBalance(currency: string, addedVolume: number, fillPrice: number): void {
     const existing = this.balances.get(currency);
     if (existing && existing.balance > 0) {
-      const totalCost =
-        existing.balance * existing.avgBuyPrice + addedVolume * fillPrice;
+      const totalCost = existing.balance * existing.avgBuyPrice + addedVolume * fillPrice;
       const totalVolume = existing.balance + addedVolume;
       const newAvg = totalVolume > 0 ? totalCost / totalVolume : fillPrice;
       this.balances.set(currency, {

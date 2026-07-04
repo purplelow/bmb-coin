@@ -1,12 +1,4 @@
-import type {
-  Balance,
-  Candle,
-  Market,
-  Order,
-  OrderSide,
-  OrderType,
-  Ticker,
-} from '@/types/domain';
+import type { Balance, Candle, Market, Order, OrderSide, OrderType, Ticker } from '@/types/domain';
 
 /** Parameters for placing an order through an adapter. */
 export interface PlaceOrderInput {

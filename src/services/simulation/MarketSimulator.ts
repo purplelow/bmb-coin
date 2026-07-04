@@ -8,11 +8,11 @@
  * - Notifies subscribers with updated Tickers.
  */
 
-import type { Candle, Market, Ticker, PriceChange } from '@/types/domain';
-import { SIM } from '@/shared/config';
-import { SEED_MARKETS, SEED_MARKET_BY_CODE } from '@/shared/config/markets';
-import type { SeedMarket } from '@/shared/config/markets';
 import type { TickerListener } from '@/services/exchange/types';
+import { SIM } from '@/shared/config';
+import { SEED_MARKETS } from '@/shared/config/markets';
+import type { SeedMarket } from '@/shared/config/markets';
+import type { Candle, Market, Ticker, PriceChange } from '@/types/domain';
 
 // ── Helpers ─────────────────────────────────────────────────────
 
@@ -36,16 +36,10 @@ function priceChange(signedRate: number): PriceChange {
 }
 
 /** Build a Ticker from the candle window for a market. */
-function buildTicker(
-  market: string,
-  candles: Candle[],
-  currentPrice: number,
-): Ticker {
+function buildTicker(market: string, candles: Candle[], currentPrice: number): Ticker {
   const sessionOpenClose = candles[0]?.close ?? currentPrice;
   const signedRate =
-    sessionOpenClose > 0
-      ? (currentPrice - sessionOpenClose) / sessionOpenClose
-      : 0;
+    sessionOpenClose > 0 ? (currentPrice - sessionOpenClose) / sessionOpenClose : 0;
   const changeRate = Math.abs(signedRate);
   const changePrice = Math.abs(currentPrice - sessionOpenClose);
 
@@ -78,11 +72,7 @@ function buildTicker(
 
 // ── Candle generation ────────────────────────────────────────────
 
-function generateHistoricalCandles(
-  seed: SeedMarket,
-  count: number,
-  nowMs: number,
-): Candle[] {
+function generateHistoricalCandles(seed: SeedMarket, count: number, nowMs: number): Candle[] {
   const vol = minuteVol(seed.volatility);
   const minuteMs = 60_000;
   const candles: Candle[] = [];

@@ -31,4 +31,9 @@ yarn-error.log*
 # editor
 .vscode/*
 !.vscode/extensions.json
+!.vscode/settings.json
 .idea
+
+# local database
+koinlab.db*
+drizzle/

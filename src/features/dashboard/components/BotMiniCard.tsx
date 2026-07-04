@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import React from "react";
-import styled from "@emotion/styled";
-import { GlassCard, CoinIcon, Badge, ValueChange } from "@/shared/ui";
-import type { Bot } from "@/types/domain";
+import React from 'react';
+import styled from '@emotion/styled';
+import { GlassCard, CoinIcon, Badge, ValueChange } from '@/shared/ui';
+import type { Bot } from '@/types/domain';
 
 interface BotMiniCardProps {
   bot: Bot;
@@ -47,27 +47,25 @@ const Right = styled.div`
   flex-shrink: 0;
 `;
 
-function statusLabel(status: Bot["status"]): string {
+function statusLabel(status: Bot['status']): string {
   switch (status) {
-    case "running":
-      return "실행 중";
-    case "paused":
-      return "일시정지";
-    case "stopped":
-      return "정지";
+    case 'running':
+      return '실행 중';
+    case 'paused':
+      return '일시정지';
+    case 'stopped':
+      return '정지';
   }
 }
 
-function statusTone(
-  status: Bot["status"],
-): "primary" | "warning" | "neutral" {
+function statusTone(status: Bot['status']): 'primary' | 'warning' | 'neutral' {
   switch (status) {
-    case "running":
-      return "primary";
-    case "paused":
-      return "warning";
-    case "stopped":
-      return "neutral";
+    case 'running':
+      return 'primary';
+    case 'paused':
+      return 'warning';
+    case 'stopped':
+      return 'neutral';
   }
 }
 

@@ -9,12 +9,7 @@ interface ProgressRingProps {
   children?: React.ReactNode;
 }
 
-export function ProgressRing({
-  value,
-  size = 64,
-  stroke = 5,
-  children,
-}: ProgressRingProps) {
+export function ProgressRing({ value, size = 64, stroke = 5, children }: ProgressRingProps) {
   const clampedValue = Math.max(0, Math.min(1, value));
   const r = (size - stroke) / 2;
   const cx = size / 2;
@@ -27,7 +22,12 @@ export function ProgressRing({
       width={size}
       height={size}
       viewBox={`0 0 ${size} ${size}`}
-      style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+      style={{
+        position: 'relative',
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
       aria-hidden="true"
     >
       {/* Track */}

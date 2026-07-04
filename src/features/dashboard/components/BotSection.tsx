@@ -1,16 +1,11 @@
-"use client";
+'use client';
 
-import React from "react";
-import styled from "@emotion/styled";
-import Link from "next/link";
-import {
-  SectionHeader,
-  EmptyState,
-  Button,
-  Icon,
-} from "@/shared/ui";
-import { useBotStore } from "@/stores/botStore";
-import { BotMiniCard } from "./BotMiniCard";
+import React from 'react';
+import Link from 'next/link';
+import styled from '@emotion/styled';
+import { SectionHeader, EmptyState, Button, Icon } from '@/shared/ui';
+import { useBotStore } from '@/stores/botStore';
+import { BotMiniCard } from './BotMiniCard';
 
 const BotList = styled.div`
   display: flex;
@@ -35,7 +30,7 @@ const SeeAllLink = styled(Link)`
 
 export function BotSection() {
   const bots = useBotStore((s) => s.bots);
-  const runningBots = bots.filter((b) => b.status === "running");
+  const runningBots = bots.filter((b) => b.status === 'running');
   const displayBots = runningBots.slice(0, 3);
 
   return (

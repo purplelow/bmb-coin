@@ -146,8 +146,7 @@ export interface RsiParams {
 }
 
 export type StrategyParams =
-  | { type: 'ma_cross'; params: MaCrossParams }
-  | { type: 'rsi'; params: RsiParams };
+  { type: 'ma_cross'; params: MaCrossParams } | { type: 'rsi'; params: RsiParams };
 
 export type Signal = 'buy' | 'sell' | 'hold';
 

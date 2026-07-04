@@ -1,8 +1,8 @@
 'use client';
 
 import React from 'react';
-import styled from '@emotion/styled';
 import { css } from '@emotion/react';
+import styled from '@emotion/styled';
 
 interface StatTileProps {
   label: string;
@@ -37,11 +37,17 @@ const Value = styled.span<{ tone: 'up' | 'down' | 'neutral' }>`
   ${({ tone, theme }) => {
     switch (tone) {
       case 'up':
-        return css`color: ${theme.color.market.up};`;
+        return css`
+          color: ${theme.color.market.up};
+        `;
       case 'down':
-        return css`color: ${theme.color.market.down};`;
+        return css`
+          color: ${theme.color.market.down};
+        `;
       default:
-        return css`color: ${theme.color.text.high};`;
+        return css`
+          color: ${theme.color.text.high};
+        `;
     }
   }}
 `;

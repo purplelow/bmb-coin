@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import React from "react";
-import styled from "@emotion/styled";
-import { Badge, ListRow } from "@/shared/ui";
-import { formatKRW, formatQuantity, formatDateTime } from "@/shared/lib/format";
-import { SEED_MARKET_BY_CODE } from "@/shared/config/markets";
-import type { Order } from "@/types/domain";
+import React from 'react';
+import styled from '@emotion/styled';
+import { SEED_MARKET_BY_CODE } from '@/shared/config/markets';
+import { formatKRW, formatQuantity, formatDateTime } from '@/shared/lib/format';
+import { Badge, ListRow } from '@/shared/ui';
+import type { Order } from '@/types/domain';
 
 // ── Styled ────────────────────────────────────────────────────────
 
@@ -45,16 +45,14 @@ export function OrderRow({ order }: OrderRowProps) {
   const market = SEED_MARKET_BY_CODE[order.market];
   const koreanName = market?.koreanName ?? order.market;
 
-  const isBuy = order.side === "bid";
+  const isBuy = order.side === 'bid';
   const executedAmount = order.avgFillPrice * order.executedVolume;
 
   return (
     <ListRow
       title={
         <TitleRow>
-          <Badge tone={isBuy ? "up" : "down"}>
-            {isBuy ? "매수" : "매도"}
-          </Badge>
+          <Badge tone={isBuy ? 'up' : 'down'}>{isBuy ? '매수' : '매도'}</Badge>
           {koreanName}
         </TitleRow>
       }
@@ -63,7 +61,7 @@ export function OrderRow({ order }: OrderRowProps) {
         <RightBlock>
           <AmountText>{formatKRW(executedAmount)}</AmountText>
           <MetaText>
-            {formatQuantity(order.executedVolume)} {market?.base ?? ""}
+            {formatQuantity(order.executedVolume)} {market?.base ?? ''}
           </MetaText>
         </RightBlock>
       }

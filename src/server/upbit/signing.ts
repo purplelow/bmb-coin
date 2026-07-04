@@ -52,9 +52,7 @@ export function createUpbitToken(params?: Record<string, string | number>): stri
   const header = base64url(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
   const body = base64url(JSON.stringify(payload));
   const signingInput = `${header}.${body}`;
-  const signature = base64url(
-    crypto.createHmac('sha256', secretKey).update(signingInput).digest(),
-  );
+  const signature = base64url(crypto.createHmac('sha256', secretKey).update(signingInput).digest());
 
   return `${signingInput}.${signature}`;
 }

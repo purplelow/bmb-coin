@@ -37,9 +37,7 @@ export function Sparkline({
 
   const linePath = buildPath(data, width, height);
 
-  const fillPath = fill
-    ? `${linePath}L${width},${height}L0,${height}Z`
-    : null;
+  const fillPath = fill ? `${linePath}L${width},${height}L0,${height}Z` : null;
 
   return (
     <svg
@@ -49,13 +47,7 @@ export function Sparkline({
       fill="none"
       aria-hidden="true"
     >
-      {fillPath && (
-        <path
-          d={fillPath}
-          fill={color}
-          opacity={0.15}
-        />
-      )}
+      {fillPath && <path d={fillPath} fill={color} opacity={0.15} />}
       <path
         d={linePath}
         stroke={color}

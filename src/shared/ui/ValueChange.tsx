@@ -1,7 +1,7 @@
 'use client';
 
-import styled from '@emotion/styled';
 import { css } from '@emotion/react';
+import styled from '@emotion/styled';
 import { formatPercent } from '@/shared/lib/format';
 
 interface ValueChangeProps {
@@ -28,18 +28,28 @@ const Wrapper = styled.span<{ tone: Tone; size: 'sm' | 'md' }>`
 
   ${({ size, theme }) =>
     size === 'sm'
-      ? css`font-size: ${theme.font.size.xs};`
-      : css`font-size: ${theme.font.size.sm};`}
+      ? css`
+          font-size: ${theme.font.size.xs};
+        `
+      : css`
+          font-size: ${theme.font.size.sm};
+        `}
 
   ${({ tone, theme }) => {
     switch (tone) {
       case 'up':
-        return css`color: ${theme.color.market.up};`;
+        return css`
+          color: ${theme.color.market.up};
+        `;
       case 'down':
-        return css`color: ${theme.color.market.down};`;
+        return css`
+          color: ${theme.color.market.down};
+        `;
       case 'flat':
       default:
-        return css`color: ${theme.color.market.flat};`;
+        return css`
+          color: ${theme.color.market.flat};
+        `;
     }
   }}
 `;

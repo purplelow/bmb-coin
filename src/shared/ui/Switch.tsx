@@ -24,9 +24,7 @@ const Track = styled.button<{ checked: boolean }>`
     checked ? theme.color.accent.primary : theme.color.glass.surfaceStrong};
 
   ${({ checked, theme }) =>
-    checked
-      ? `box-shadow: 0 0 12px ${theme.color.accent.primarySoft};`
-      : `box-shadow: none;`}
+    checked ? `box-shadow: 0 0 12px ${theme.color.accent.primarySoft};` : `box-shadow: none;`}
 
   &:focus-visible {
     outline: 2px solid ${({ theme }) => theme.color.accent.primary};

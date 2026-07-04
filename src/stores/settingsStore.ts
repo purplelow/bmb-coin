@@ -2,6 +2,7 @@
 
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
+import { serverStateStorage } from '@/shared/lib/server-storage';
 
 export type TradingMode = 'test' | 'live';
 
@@ -34,7 +35,8 @@ export const useSettingsStore = create<SettingsState>()(
     }),
     {
       name: 'koinlab-settings',
-      storage: createJSONStorage(() => localStorage),
+      // DB-backed, session-scoped persistence (migrates old localStorage once).
+      storage: createJSONStorage(() => serverStateStorage('settings', 'koinlab-settings')),
     },
   ),
 );

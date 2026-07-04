@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import React from "react";
-import styled from "@emotion/styled";
-import { GlassCard, ProgressRing, ValueChange } from "@/shared/ui";
-import { formatKRW } from "@/shared/lib/format";
-import { usePortfolioTotals } from "@/stores/portfolioStore";
+import React from 'react';
+import styled from '@emotion/styled';
+import { formatKRW } from '@/shared/lib/format';
+import { GlassCard, ProgressRing, ValueChange } from '@/shared/ui';
+import { usePortfolioTotals } from '@/stores/portfolioStore';
 
 // ── Styled ────────────────────────────────────────────────────────
 
@@ -36,7 +36,7 @@ const Label = styled.span`
 
 const TotalValue = styled.span`
   font-family: ${({ theme }) => theme.font.family};
-  font-size: ${({ theme }) => theme.font.size["3xl"]};
+  font-size: ${({ theme }) => theme.font.size['3xl']};
   font-weight: ${({ theme }) => theme.font.weight.bold};
   color: ${({ theme }) => theme.color.text.high};
   letter-spacing: -0.02em;
@@ -103,7 +103,9 @@ export function HeroCard() {
           <RingWrapper>
             <ProgressRing value={coinRatio} size={72} stroke={6} />
             <RingLabel>
-              코인<br />{coinPct}%
+              코인
+              <br />
+              {coinPct}%
             </RingLabel>
           </RingWrapper>
         </TopRow>
@@ -173,14 +175,8 @@ function AllocationBar({ cashPct, coinPct }: AllocationBarProps) {
   return (
     <BarWrapper>
       <BarTrack>
-        <BarSegment
-          width={coinPct}
-          gradient="linear-gradient(90deg, #7C5CFF 0%, #39E5FF 100%)"
-        />
-        <BarSegment
-          width={cashPct}
-          gradient="rgba(255,255,255,0.12)"
-        />
+        <BarSegment width={coinPct} gradient="linear-gradient(90deg, #7C5CFF 0%, #39E5FF 100%)" />
+        <BarSegment width={cashPct} gradient="rgba(255,255,255,0.12)" />
       </BarTrack>
       <BarLegend>
         <LegendItem>

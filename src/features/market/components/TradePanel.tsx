@@ -1,19 +1,13 @@
-"use client";
+'use client';
 
-import React, { useState } from "react";
-import styled from "@emotion/styled";
-import {
-  SegmentedControl,
-  NumberField,
-  Button,
-  GlassCard,
-  Sheet,
-} from "@/shared/ui";
-import { usePortfolioStore, usePositions, usePortfolioTotals } from "@/stores/portfolioStore";
-import { useUiStore } from "@/stores/uiStore";
-import { useSettingsStore, useIsLive, ORDER_PRESETS } from "@/stores/settingsStore";
-import { getExchangeAdapter } from "@/services/exchange";
-import { formatKRW, formatQuantity } from "@/shared/lib/format";
+import React, { useState } from 'react';
+import styled from '@emotion/styled';
+import { getExchangeAdapter } from '@/services/exchange';
+import { formatKRW, formatQuantity } from '@/shared/lib/format';
+import { SegmentedControl, NumberField, Button, GlassCard, Sheet } from '@/shared/ui';
+import { usePortfolioStore, usePositions, usePortfolioTotals } from '@/stores/portfolioStore';
+import { useSettingsStore, useIsLive, ORDER_PRESETS } from '@/stores/settingsStore';
+import { useUiStore } from '@/stores/uiStore';
 
 interface TradePanelProps {
   market: string;
@@ -90,14 +84,14 @@ const Strong = styled.span`
 `;
 
 const SIDE_OPTIONS = [
-  { label: "매수", value: "bid" },
-  { label: "매도", value: "ask" },
+  { label: '매수', value: 'bid' },
+  { label: '매도', value: 'ask' },
 ];
 
 const PERCENT_CHIPS = [10, 25, 50, 100];
 
 export function TradePanel({ market }: TradePanelProps) {
-  const [side, setSide] = useState<"bid" | "ask">("bid");
+  const [side, setSide] = useState<'bid' | 'ask'>('bid');
   const [buyAmount, setBuyAmount] = useState(0);
   const [sellVolume, setSellVolume] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -108,7 +102,7 @@ export function TradePanel({ market }: TradePanelProps) {
   const isLive = useIsLive();
   const orderPreset = useSettingsStore((s) => s.orderPreset);
 
-  const base = market.replace("KRW-", "");
+  const base = market.replace('KRW-', '');
   const position = positions.find((p) => p.base === base);
   const holdingQty = position?.quantity ?? 0;
 
@@ -123,7 +117,7 @@ export function TradePanel({ market }: TradePanelProps) {
     setSellVolume(qty);
   };
 
-  const isBuy = side === "bid";
+  const isBuy = side === 'bid';
 
   // Actually submit the order to the active adapter (mock or live).
   const placeOrder = async () => {
@@ -131,18 +125,18 @@ export function TradePanel({ market }: TradePanelProps) {
     setLoading(true);
     try {
       const adapter = getExchangeAdapter();
-      if (side === "bid") {
-        await adapter.placeOrder({ market, side: "bid", type: "price", amount: buyAmount });
+      if (side === 'bid') {
+        await adapter.placeOrder({ market, side: 'bid', type: 'price', amount: buyAmount });
       } else {
-        await adapter.placeOrder({ market, side: "ask", type: "market", volume: sellVolume });
+        await adapter.placeOrder({ market, side: 'ask', type: 'market', volume: sellVolume });
       }
       await usePortfolioStore.getState().refresh();
-      useUiStore.getState().showToast("주문이 체결되었습니다", "success");
+      useUiStore.getState().showToast('주문이 체결되었습니다', 'success');
       setBuyAmount(0);
       setSellVolume(0);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "주문 처리 중 오류가 발생했습니다";
-      useUiStore.getState().showToast(msg, "danger");
+      const msg = err instanceof Error ? err.message : '주문 처리 중 오류가 발생했습니다';
+      useUiStore.getState().showToast(msg, 'danger');
     } finally {
       setLoading(false);
       setConfirmOpen(false);
@@ -151,12 +145,12 @@ export function TradePanel({ market }: TradePanelProps) {
 
   const handleTrade = () => {
     if (loading) return;
-    if (side === "bid" && buyAmount <= 0) {
-      useUiStore.getState().showToast("매수 금액을 입력해주세요", "danger");
+    if (side === 'bid' && buyAmount <= 0) {
+      useUiStore.getState().showToast('매수 금액을 입력해주세요', 'danger');
       return;
     }
-    if (side === "ask" && sellVolume <= 0) {
-      useUiStore.getState().showToast("매도 수량을 입력해주세요", "danger");
+    if (side === 'ask' && sellVolume <= 0) {
+      useUiStore.getState().showToast('매도 수량을 입력해주세요', 'danger');
       return;
     }
     // Live orders always pass through an explicit "real money" confirmation.
@@ -164,7 +158,7 @@ export function TradePanel({ market }: TradePanelProps) {
     else void placeOrder();
   };
 
-  const buttonLabel = isBuy ? "매수" : "매도";
+  const buttonLabel = isBuy ? '매수' : '매도';
   const buttonDisabled = loading || (isBuy ? buyAmount <= 0 : sellVolume <= 0);
 
   return (
@@ -173,7 +167,7 @@ export function TradePanel({ market }: TradePanelProps) {
         <SegmentedControl
           options={SIDE_OPTIONS}
           value={side}
-          onChange={(v) => setSide(v as "bid" | "ask")}
+          onChange={(v) => setSide(v as 'bid' | 'ask')}
           fullWidth
         />
 
@@ -240,13 +234,13 @@ export function TradePanel({ market }: TradePanelProps) {
         )}
 
         <Button
-          variant={isBuy ? "primary" : "danger"}
+          variant={isBuy ? 'primary' : 'danger'}
           fullWidth
           size="lg"
           disabled={buttonDisabled}
           onClick={handleTrade}
         >
-          {loading ? "처리 중..." : isLive ? `실거래 ${buttonLabel}` : buttonLabel}
+          {loading ? '처리 중...' : isLive ? `실거래 ${buttonLabel}` : buttonLabel}
         </Button>
       </Wrapper>
 
@@ -254,26 +248,30 @@ export function TradePanel({ market }: TradePanelProps) {
         <ConfirmText>
           {isBuy ? (
             <>
-              <b>{base}</b> 를 <Strong>{formatKRW(buyAmount)}</Strong> 어치 <Strong>실제 매수</Strong>
+              <b>{base}</b> 를 <Strong>{formatKRW(buyAmount)}</Strong> 어치{' '}
+              <Strong>실제 매수</Strong>
               합니다.
             </>
           ) : (
             <>
-              <b>{base}</b> <Strong>{formatQuantity(sellVolume)} {base}</Strong> 를{" "}
-              <Strong>실제 매도</Strong>합니다.
+              <b>{base}</b>{' '}
+              <Strong>
+                {formatQuantity(sellVolume)} {base}
+              </Strong>{' '}
+              를 <Strong>실제 매도</Strong>합니다.
             </>
           )}
           <br />
           실제 자금이 사용되며 되돌릴 수 없습니다.
         </ConfirmText>
         <Button
-          variant={isBuy ? "primary" : "danger"}
+          variant={isBuy ? 'primary' : 'danger'}
           fullWidth
           size="lg"
           disabled={loading}
           onClick={() => void placeOrder()}
         >
-          {loading ? "처리 중..." : `${buttonLabel} 확정`}
+          {loading ? '처리 중...' : `${buttonLabel} 확정`}
         </Button>
       </Sheet>
     </GlassCard>

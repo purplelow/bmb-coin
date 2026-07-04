@@ -1,16 +1,16 @@
 import { NextResponse } from 'next/server';
-import { hasUpbitKeys } from '@/server/upbit/signing';
+import { requireSession } from '@/server/session';
 import { fetchBalances } from '@/server/upbit/client';
+import { hasUpbitKeys } from '@/server/upbit/signing';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
+  const { error } = await requireSession();
+  if (error) return error;
   if (!hasUpbitKeys()) {
-    return NextResponse.json(
-      { error: 'Upbit API 키가 설정되지 않았습니다.' },
-      { status: 503 },
-    );
+    return NextResponse.json({ error: 'Upbit API 키가 설정되지 않았습니다.' }, { status: 503 });
   }
   try {
     return NextResponse.json(await fetchBalances());

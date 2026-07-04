@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import React, { useId } from "react";
-import styled from "@emotion/styled";
-import type { Candle } from "@/types/domain";
-import { formatPrice } from "@/shared/lib/format";
+import React, { useId } from 'react';
+import styled from '@emotion/styled';
+import { formatPrice } from '@/shared/lib/format';
+import type { Candle } from '@/types/domain';
 
 interface PriceChartProps {
   candles: Candle[];
@@ -36,14 +36,14 @@ function buildLinePath(
   padTop: number,
   padBottom: number,
 ): string {
-  if (closes.length < 2) return "";
+  if (closes.length < 2) return '';
   const range = maxV - minV || 1;
   const points = closes.map((v, i) => {
     const x = (i / (closes.length - 1)) * w;
     const y = padTop + ((maxV - v) / range) * (h - padTop - padBottom);
     return `${x.toFixed(2)},${y.toFixed(2)}`;
   });
-  return "M" + points.join("L");
+  return 'M' + points.join('L');
 }
 
 export function PriceChart({ candles, width = 400, height = 200 }: PriceChartProps) {
@@ -77,15 +77,14 @@ export function PriceChart({ candles, width = 400, height = 200 }: PriceChartPro
   const linePath = buildLinePath(closes, minV, maxV, chartW, chartH, PAD_TOP, PAD_BOTTOM);
   const fillPath = `${linePath}L${chartW},${chartH - PAD_BOTTOM}L0,${chartH - PAD_BOTTOM}Z`;
 
-  const upColor = "#2FE6A8";
-  const downColor = "#FF5B73";
+  const upColor = '#2FE6A8';
+  const downColor = '#FF5B73';
   const lineColor = isUp ? upColor : downColor;
 
   // Y label positions
   const range = maxV - minV || 1;
   const midV = (maxV + minV) / 2;
-  const yForValue = (v: number) =>
-    PAD_TOP + ((maxV - v) / range) * (chartH - PAD_TOP - PAD_BOTTOM);
+  const yForValue = (v: number) => PAD_TOP + ((maxV - v) / range) * (chartH - PAD_TOP - PAD_BOTTOM);
 
   const labelY = (v: number) => yForValue(v).toFixed(1);
 
@@ -104,10 +103,7 @@ export function PriceChart({ candles, width = 400, height = 200 }: PriceChartPro
         </defs>
 
         {/* Fill area */}
-        <path
-          d={fillPath}
-          fill={`url(#${isUp ? gradUpId : gradDownId})`}
-        />
+        <path d={fillPath} fill={`url(#${isUp ? gradUpId : gradDownId})`} />
 
         {/* Line */}
         <path

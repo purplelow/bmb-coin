@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import React from "react";
-import styled from "@emotion/styled";
-import { CoinIcon, ListRow, ValueChange } from "@/shared/ui";
-import { formatKRW, formatQuantity } from "@/shared/lib/format";
-import { SEED_MARKET_BY_CODE } from "@/shared/config/markets";
-import type { Position } from "@/types/domain";
+import React from 'react';
+import styled from '@emotion/styled';
+import { SEED_MARKET_BY_CODE } from '@/shared/config/markets';
+import { formatKRW, formatQuantity } from '@/shared/lib/format';
+import { CoinIcon, ListRow, ValueChange } from '@/shared/ui';
+import type { Position } from '@/types/domain';
 
 // ── Styled ────────────────────────────────────────────────────────
 
@@ -47,7 +47,9 @@ export function PositionRow({ position }: PositionRowProps) {
       right={
         <RightBlock>
           <ValuationText>{formatKRW(position.valuation)}</ValuationText>
-          <QuantityText>{formatQuantity(position.quantity)} {position.base}</QuantityText>
+          <QuantityText>
+            {formatQuantity(position.quantity)} {position.base}
+          </QuantityText>
           <ValueChange rate={position.profitRate} showArrow size="sm" />
         </RightBlock>
       }

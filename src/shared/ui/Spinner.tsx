@@ -1,7 +1,7 @@
 'use client';
 
-import styled from '@emotion/styled';
 import { keyframes } from '@emotion/react';
+import styled from '@emotion/styled';
 
 interface SpinnerProps {
   size?: number;

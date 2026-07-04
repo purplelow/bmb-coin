@@ -10,10 +10,7 @@
  * - compact: uses 만(10,000) / 억(100,000,000) suffixes for large values.
  * - default: "₩123,456" with thousands grouping.
  */
-export function formatKRW(
-  value: number,
-  opts?: { compact?: boolean; decimals?: number },
-): string {
+export function formatKRW(value: number, opts?: { compact?: boolean; decimals?: number }): string {
   const compact = opts?.compact ?? false;
   const decimals = opts?.decimals;
 
@@ -90,10 +87,7 @@ export function formatNumber(value: number, decimals = 2): string {
  * Input 0.0123 -> "1.23%"
  * signed: true -> prefix "+" for positives.
  */
-export function formatPercent(
-  rate: number,
-  opts?: { signed?: boolean },
-): string {
+export function formatPercent(rate: number, opts?: { signed?: boolean }): string {
   const signed = opts?.signed ?? false;
   const pct = (rate * 100).toFixed(2);
   const num = parseFloat(pct);

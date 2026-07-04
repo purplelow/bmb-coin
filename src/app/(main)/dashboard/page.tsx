@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import React from "react";
-import { useRouter } from "next/navigation";
-import styled from "@emotion/styled";
-import { Screen, AppHeader, IconButton, Icon } from "@/shared/ui";
-import { PortfolioHero } from "@/features/dashboard/components/PortfolioHero";
-import { StatRow } from "@/features/dashboard/components/StatRow";
-import { BotSection } from "@/features/dashboard/components/BotSection";
-import { MarketSection } from "@/features/dashboard/components/MarketSection";
+import React from 'react';
+import { useRouter } from 'next/navigation';
+import styled from '@emotion/styled';
+import { BotSection } from '@/features/dashboard/components/BotSection';
+import { MarketSection } from '@/features/dashboard/components/MarketSection';
+import { PortfolioHero } from '@/features/dashboard/components/PortfolioHero';
+import { StatRow } from '@/features/dashboard/components/StatRow';
+import { Screen, AppHeader, IconButton, Icon } from '@/shared/ui';
 
 const GreetingBlock = styled.div`
   display: flex;
@@ -61,7 +61,7 @@ export default function DashboardPage() {
               label="설정"
               variant="ghost"
               size={40}
-              onClick={() => router.push("/settings")}
+              onClick={() => router.push('/settings')}
             >
               <Icon name="settings" size={20} />
             </IconButton>

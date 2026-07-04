@@ -6,10 +6,10 @@
  * tickers are polled (no key needed for public data).
  */
 
-import type { Balance, Candle, Market, Order, Ticker } from '@/types/domain';
 import type { ExchangeAdapter, PlaceOrderInput, TickerListener } from '@/services/exchange/types';
-import { SEED_MARKET_BY_CODE } from '@/shared/config/markets';
 import { UpbitTickerSocket } from '@/services/exchange/upbit/UpbitTickerSocket';
+import { SEED_MARKET_BY_CODE } from '@/shared/config/markets';
+import type { Balance, Candle, Market, Order, Ticker } from '@/types/domain';
 
 /** Poll interval for the live ticker stream (ms). Conservative to respect rate limits. */
 const POLL_MS = 2500;

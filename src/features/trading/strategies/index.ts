@@ -3,9 +3,8 @@
  * Pure TS — no React, no DOM.
  */
 
-import type { Candle, Signal, StrategyParams, StrategyType } from '@/types/domain';
-import type { MaCrossParams, RsiParams } from '@/types/domain';
 import { sma, rsi as computeRsi } from '@/shared/lib/indicators';
+import type { Candle, Signal, StrategyParams, StrategyType , MaCrossParams, RsiParams } from '@/types/domain';
 
 // ── Types ────────────────────────────────────────────────────────
 
@@ -147,12 +146,7 @@ export function evaluateStrategy(
     const prevShort = shortSma[len - 2] ?? null;
     const prevLong = longSma[len - 2] ?? null;
 
-    if (
-      curShort === null ||
-      curLong === null ||
-      prevShort === null ||
-      prevLong === null
-    ) {
+    if (curShort === null || curLong === null || prevShort === null || prevLong === null) {
       return { signal: 'hold', reason: '지표 계산 중' };
     }
 

@@ -1,8 +1,8 @@
 'use client';
 
 import React from 'react';
-import styled from '@emotion/styled';
 import { css } from '@emotion/react';
+import styled from '@emotion/styled';
 
 export type BadgeTone = 'up' | 'down' | 'neutral' | 'primary' | 'secondary' | 'warning';
 

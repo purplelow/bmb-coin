@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import React from "react";
-import styled from "@emotion/styled";
-import { SectionHeader } from "@/shared/ui";
-import { formatKRW } from "@/shared/lib/format";
-import { SEED_MARKET_BY_CODE } from "@/shared/config/markets";
-import { usePositions, usePortfolioTotals } from "@/stores/portfolioStore";
+import React from 'react';
+import styled from '@emotion/styled';
+import { SEED_MARKET_BY_CODE } from '@/shared/config/markets';
+import { formatKRW } from '@/shared/lib/format';
+import { SectionHeader } from '@/shared/ui';
+import { usePositions, usePortfolioTotals } from '@/stores/portfolioStore';
 
 // ── Styled ────────────────────────────────────────────────────────
 
@@ -60,10 +60,10 @@ const TrackFill = styled.div<{ width: number; color: string }>`
 
 // Cycle through accent colors for coin bars
 const ACCENT_COLORS = [
-  "linear-gradient(90deg, #7C5CFF, #39E5FF)",
-  "linear-gradient(90deg, #C5FF4A, #39E5FF)",
-  "linear-gradient(90deg, #39E5FF, #7C5CFF)",
-  "linear-gradient(90deg, #C5FF4A, #7C5CFF)",
+  'linear-gradient(90deg, #7C5CFF, #39E5FF)',
+  'linear-gradient(90deg, #C5FF4A, #39E5FF)',
+  'linear-gradient(90deg, #39E5FF, #7C5CFF)',
+  'linear-gradient(90deg, #C5FF4A, #7C5CFF)',
 ];
 
 // ── Component ─────────────────────────────────────────────────────
@@ -89,10 +89,7 @@ export function AllocationSection() {
           </ItemValue>
         </ItemHeader>
         <TrackOuter>
-          <TrackFill
-            width={cashPct}
-            color="rgba(255,255,255,0.25)"
-          />
+          <TrackFill width={cashPct} color="rgba(255,255,255,0.25)" />
         </TrackOuter>
       </AllocationItem>
 
@@ -101,12 +98,15 @@ export function AllocationSection() {
         const pct = (pos.valuation / valuation) * 100;
         const market = SEED_MARKET_BY_CODE[pos.market];
         const label = market?.koreanName ?? pos.base;
-        const color = ACCENT_COLORS[idx % ACCENT_COLORS.length] ?? ACCENT_COLORS[0] ?? "rgba(124,92,255,1)";
+        const color =
+          ACCENT_COLORS[idx % ACCENT_COLORS.length] ?? ACCENT_COLORS[0] ?? 'rgba(124,92,255,1)';
 
         return (
           <AllocationItem key={pos.market}>
             <ItemHeader>
-              <ItemLabel>{label} ({pos.base})</ItemLabel>
+              <ItemLabel>
+                {label} ({pos.base})
+              </ItemLabel>
               <ItemValue>
                 {formatKRW(pos.valuation, { compact: true })} ({pct.toFixed(1)}%)
               </ItemValue>

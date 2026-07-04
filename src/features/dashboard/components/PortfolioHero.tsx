@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import React from "react";
-import styled from "@emotion/styled";
-import { GlassCard, Sparkline, ValueChange } from "@/shared/ui";
-import { usePortfolioTotals } from "@/stores/portfolioStore";
-import { useMarketStore } from "@/stores/marketStore";
-import { formatKRW } from "@/shared/lib/format";
+import React from 'react';
+import styled from '@emotion/styled';
+import { formatKRW } from '@/shared/lib/format';
+import { GlassCard, Sparkline, ValueChange } from '@/shared/ui';
+import { useMarketStore } from '@/stores/marketStore';
+import { usePortfolioTotals } from '@/stores/portfolioStore';
 
 const HeroCard = styled(GlassCard)`
   position: relative;
@@ -56,7 +56,7 @@ const Label = styled.span`
 
 const TotalValuation = styled.span`
   font-family: ${({ theme }) => theme.font.mono};
-  font-size: ${({ theme }) => theme.font.size["3xl"]};
+  font-size: ${({ theme }) => theme.font.size['3xl']};
   font-weight: ${({ theme }) => theme.font.weight.bold};
   color: ${({ theme }) => theme.color.text.high};
   line-height: 1;
@@ -92,13 +92,11 @@ export function PortfolioHero() {
   const { valuation, pnl, pnlRate } = usePortfolioTotals();
 
   // Use BTC candle close prices as a visual proxy for the portfolio sparkline
-  const btcCandles = useMarketStore((s) => s.candles["KRW-BTC"]);
+  const btcCandles = useMarketStore((s) => s.candles['KRW-BTC']);
   const sparkData: number[] =
-    btcCandles && btcCandles.length > 1
-      ? btcCandles.slice(-30).map((c) => c.close)
-      : [];
+    btcCandles && btcCandles.length > 1 ? btcCandles.slice(-30).map((c) => c.close) : [];
 
-  const sparkColor = pnlRate >= 0 ? "#2FE6A8" : "#FF5B73";
+  const sparkColor = pnlRate >= 0 ? '#2FE6A8' : '#FF5B73';
 
   return (
     <HeroCard glow="secondary" padding={5}>
@@ -112,7 +110,7 @@ export function PortfolioHero() {
               <PnlLabel>오늘 손익</PnlLabel>
               <ValueChange rate={pnlRate} showArrow size="md" />
               <PnlLabel style={{ opacity: 0.7 }}>
-                {pnl >= 0 ? "+" : ""}
+                {pnl >= 0 ? '+' : ''}
                 {formatKRW(pnl, { compact: true })}
               </PnlLabel>
             </PnlRow>
@@ -121,13 +119,7 @@ export function PortfolioHero() {
           <SparklineWrapper>
             <SparklineLabel>BTC 추세</SparklineLabel>
             {sparkData.length >= 2 ? (
-              <Sparkline
-                data={sparkData}
-                width={100}
-                height={48}
-                color={sparkColor}
-                fill
-              />
+              <Sparkline data={sparkData} width={100} height={48} color={sparkColor} fill />
             ) : (
               <svg width={100} height={48} />
             )}

@@ -1,11 +1,11 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import styled from '@emotion/styled';
 import { keyframes } from '@emotion/react';
-import { Button, Badge } from '@/shared/ui';
-import { HeroCoin } from '@/features/onboarding/components/HeroCoin';
+import styled from '@emotion/styled';
 import { FeatureCard } from '@/features/onboarding/components/FeatureCard';
+import { HeroCoin } from '@/features/onboarding/components/HeroCoin';
+import { Button, Badge } from '@/shared/ui';
 
 // ── Animations ────────────────────────────────────────────────────────────────
 
@@ -204,7 +204,9 @@ export default function OnboardingPage() {
   const router = useRouter();
 
   function handleStart() {
-    router.push('/dashboard');
+    // Landing → login. (Already-authenticated visitors are bounced from
+    // /login to /dashboard by the middleware, so one target covers both.)
+    router.push('/login');
   }
 
   return (
@@ -230,7 +232,8 @@ export default function OnboardingPage() {
         {/* Tagline */}
         <Anim delay={220} style={{ alignItems: 'center' }}>
           <Tagline>
-            지표 기반 코인 자동매매<br />
+            지표 기반 코인 자동매매
+            <br />
             모의투자로 안전하게
           </Tagline>
         </Anim>
@@ -272,12 +275,7 @@ export default function OnboardingPage() {
         {/* CTA button */}
         <Anim delay={500}>
           <CtaWrapper>
-            <Button
-              variant="primary"
-              size="lg"
-              fullWidth
-              onClick={handleStart}
-            >
+            <Button variant="primary" size="lg" fullWidth onClick={handleStart}>
               시작하기
             </Button>
             <CtaFootnote>실제 자산을 사용하지 않는 안전한 모의투자입니다</CtaFootnote>

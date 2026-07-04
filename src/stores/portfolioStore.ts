@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { create } from "zustand";
-import type { Balance, Order, Position } from "@/types/domain";
-import { getExchangeAdapter } from "@/services/exchange";
-import { SEED_MARKET_BY_CODE } from "@/shared/config/markets";
-import { useMarketStore } from "./marketStore";
+import { create } from 'zustand';
+import { getExchangeAdapter } from '@/services/exchange';
+import { SEED_MARKET_BY_CODE } from '@/shared/config/markets';
+import type { Balance, Order, Position } from '@/types/domain';
+import { useMarketStore } from './marketStore';
 
 // ── State shape ──────────────────────────────────────────────────
 
@@ -25,18 +25,24 @@ export const usePortfolioStore = create<PortfolioState>((set) => ({
 
   refresh: async () => {
     const adapter = getExchangeAdapter();
-    const [balances, orders] = await Promise.all([
-      adapter.getBalances(),
-      adapter.getOrders(),
-    ]);
-    set({ balances, orders });
+    try {
+      const [balances, orders] = await Promise.all([adapter.getBalances(), adapter.getOrders()]);
+      set({ balances, orders });
+    } catch {
+      // Live mode: keys not configured yet, or a transient API failure.
+      // Keep the previous snapshot — never wipe balances on a failed poll.
+    }
   },
 
   addOrder: async (o: Order) => {
     const adapter = getExchangeAdapter();
     set((state) => ({ orders: [o, ...state.orders] }));
-    const balances = await adapter.getBalances();
-    set({ balances });
+    try {
+      const balances = await adapter.getBalances();
+      set({ balances });
+    } catch {
+      // Balance refresh failed — the periodic refresh will catch up.
+    }
   },
 }));
 
@@ -49,7 +55,7 @@ export function usePositions(): Position[] {
   const positions: Position[] = [];
 
   for (const bal of balances) {
-    if (bal.currency === "KRW") continue;
+    if (bal.currency === 'KRW') continue;
     if (bal.balance <= 0 && bal.locked <= 0) continue;
 
     // Find the market code (e.g. KRW-BTC) for this currency
@@ -91,14 +97,14 @@ export function usePortfolioTotals(): {
   const balances = usePortfolioStore((s) => s.balances);
   const tickers = useMarketStore((s) => s.tickers);
 
-  const krwBalance = balances.find((b) => b.currency === "KRW");
+  const krwBalance = balances.find((b) => b.currency === 'KRW');
   const cash = (krwBalance?.balance ?? 0) + (krwBalance?.locked ?? 0);
 
   let assetValuation = 0;
   let totalCostBasis = 0;
 
   for (const bal of balances) {
-    if (bal.currency === "KRW") continue;
+    if (bal.currency === 'KRW') continue;
     if (bal.balance <= 0 && bal.locked <= 0) continue;
 
     const marketCode = `KRW-${bal.currency}`;

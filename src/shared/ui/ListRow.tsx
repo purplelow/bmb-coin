@@ -1,8 +1,8 @@
 'use client';
 
 import React from 'react';
-import styled from '@emotion/styled';
 import { css } from '@emotion/react';
+import styled from '@emotion/styled';
 
 interface ListRowProps {
   left?: React.ReactNode;
@@ -17,8 +17,7 @@ const Row = styled.div<{ clickable: boolean }>`
   align-items: center;
   gap: ${({ theme }) => theme.space(3)};
   padding: ${({ theme }) => theme.space(3)} ${({ theme }) => theme.space(5)};
-  transition:
-    background ${({ theme }) => theme.motion.fast};
+  transition: background ${({ theme }) => theme.motion.fast};
   -webkit-tap-highlight-color: transparent;
 
   ${({ clickable, theme }) =>

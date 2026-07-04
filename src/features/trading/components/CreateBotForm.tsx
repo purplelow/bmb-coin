@@ -1,7 +1,9 @@
-"use client";
+'use client';
 
-import React, { useState, useCallback } from "react";
-import styled from "@emotion/styled";
+import React, { useState, useCallback } from 'react';
+import styled from '@emotion/styled';
+import { STRATEGY_DEFS, createDefaultStrategy } from '@/features/trading/strategies';
+import { SEED_MARKETS } from '@/shared/config/markets';
 import {
   TextField,
   NumberField,
@@ -10,15 +12,10 @@ import {
   Switch,
   Button,
   SectionHeader,
-} from "@/shared/ui";
-import { SEED_MARKETS } from "@/shared/config/markets";
-import {
-  STRATEGY_DEFS,
-  createDefaultStrategy,
-} from "@/features/trading/strategies";
-import { useBotStore } from "@/stores/botStore";
-import { useUiStore } from "@/stores/uiStore";
-import type { StrategyType, StrategyParams, RiskParams } from "@/types/domain";
+} from '@/shared/ui';
+import { useBotStore } from '@/stores/botStore';
+import { useUiStore } from '@/stores/uiStore';
+import type { StrategyType, StrategyParams, RiskParams } from '@/types/domain';
 
 // ── Styled ─────────────────────────────────────────────────────────
 
@@ -140,20 +137,17 @@ const RiskHelperText = styled.p`
 
 // ── Helpers ────────────────────────────────────────────────────────
 
-const STRATEGY_OPTIONS = (Object.keys(STRATEGY_DEFS) as StrategyType[]).map(
-  (type) => ({ label: STRATEGY_DEFS[type].label, value: type })
-);
+const STRATEGY_OPTIONS = (Object.keys(STRATEGY_DEFS) as StrategyType[]).map((type) => ({
+  label: STRATEGY_DEFS[type].label,
+  value: type,
+}));
 
 function getParamValue(strategy: StrategyParams, key: string): number {
   const params = strategy.params as unknown as Record<string, number>;
   return params[key] ?? 0;
 }
 
-function setParamValue(
-  strategy: StrategyParams,
-  key: string,
-  value: number
-): StrategyParams {
+function setParamValue(strategy: StrategyParams, key: string, value: number): StrategyParams {
   const merged = {
     ...strategy,
     params: {
@@ -171,14 +165,10 @@ interface CreateBotFormProps {
 }
 
 export function CreateBotForm({ onClose }: CreateBotFormProps) {
-  const [name, setName] = useState("");
-  const [market, setMarket] = useState(
-    SEED_MARKETS[0]?.code ?? "KRW-BTC"
-  );
-  const [strategyType, setStrategyType] = useState<StrategyType>("ma_cross");
-  const [strategy, setStrategy] = useState<StrategyParams>(
-    createDefaultStrategy("ma_cross")
-  );
+  const [name, setName] = useState('');
+  const [market, setMarket] = useState(SEED_MARKETS[0]?.code ?? 'KRW-BTC');
+  const [strategyType, setStrategyType] = useState<StrategyType>('ma_cross');
+  const [strategy, setStrategy] = useState<StrategyParams>(createDefaultStrategy('ma_cross'));
   const [slOn, setSlOn] = useState(true);
   const [sl, setSl] = useState(5);
   const [tpOn, setTpOn] = useState(true);
@@ -193,17 +183,14 @@ export function CreateBotForm({ onClose }: CreateBotFormProps) {
     setStrategy(createDefaultStrategy(type));
   }, []);
 
-  const handleSliderChange = useCallback(
-    (key: string, value: number) => {
-      setStrategy((prev) => setParamValue(prev, key, value));
-    },
-    []
-  );
+  const handleSliderChange = useCallback((key: string, value: number) => {
+    setStrategy((prev) => setParamValue(prev, key, value));
+  }, []);
 
   const handleSubmit = useCallback(() => {
     const trimmedName = name.trim();
     if (!trimmedName) {
-      showToast("봇 이름을 입력해 주세요.", "danger");
+      showToast('봇 이름을 입력해 주세요.', 'danger');
       return;
     }
     const risk: RiskParams = {
@@ -211,23 +198,18 @@ export function CreateBotForm({ onClose }: CreateBotFormProps) {
       takeProfitPct: tpOn ? tp : null,
     };
     createBot({ name: trimmedName, market, strategy, risk });
-    showToast(`"${trimmedName}" 봇이 생성되었습니다.`, "success");
+    showToast(`"${trimmedName}" 봇이 생성되었습니다.`, 'success');
     onClose();
   }, [name, market, strategy, slOn, sl, tpOn, tp, createBot, showToast, onClose]);
 
   const def = STRATEGY_DEFS[strategyType];
-  const orderAmountField = def.fields.find((f) => f.key === "orderAmount");
-  const stratParamFields = def.fields.filter((f) => f.key !== "orderAmount");
+  const orderAmountField = def.fields.find((f) => f.key === 'orderAmount');
+  const stratParamFields = def.fields.filter((f) => f.key !== 'orderAmount');
 
   return (
     <Form>
       {/* Bot name */}
-      <TextField
-        label="봇 이름"
-        value={name}
-        onChange={setName}
-        placeholder="내 자동매매 봇"
-      />
+      <TextField label="봇 이름" value={name} onChange={setName} placeholder="내 자동매매 봇" />
 
       <Divider />
 
@@ -276,7 +258,7 @@ export function CreateBotForm({ onClose }: CreateBotFormProps) {
                   <FieldLabel>{field.label}</FieldLabel>
                   <SliderValue>
                     {val}
-                    {field.unit ? ` ${field.unit}` : ""}
+                    {field.unit ? ` ${field.unit}` : ''}
                   </SliderValue>
                 </SliderLabelRow>
                 <Slider
@@ -341,8 +323,8 @@ export function CreateBotForm({ onClose }: CreateBotFormProps) {
       {orderAmountField !== undefined && (
         <NumberField
           label={orderAmountField.label}
-          value={getParamValue(strategy, "orderAmount")}
-          onChange={(v) => handleSliderChange("orderAmount", v)}
+          value={getParamValue(strategy, 'orderAmount')}
+          onChange={(v) => handleSliderChange('orderAmount', v)}
           min={orderAmountField.min}
           max={orderAmountField.max}
           step={orderAmountField.step}
@@ -351,13 +333,7 @@ export function CreateBotForm({ onClose }: CreateBotFormProps) {
       )}
 
       {/* Submit */}
-      <Button
-        variant="primary"
-        size="lg"
-        fullWidth
-        onClick={handleSubmit}
-        type="button"
-      >
+      <Button variant="primary" size="lg" fullWidth onClick={handleSubmit} type="button">
         봇 생성
       </Button>
     </Form>

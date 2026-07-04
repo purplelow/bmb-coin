@@ -2,8 +2,8 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import styled from '@emotion/styled';
 import { css } from '@emotion/react';
+import styled from '@emotion/styled';
 import { Icon } from './Icon';
 import type { IconName } from './Icon';
 
@@ -121,9 +121,7 @@ export function BottomNav() {
     <Nav>
       {TABS.map((tab) => {
         const active =
-          tab.href === '/market'
-            ? pathname.startsWith('/market')
-            : pathname === tab.href;
+          tab.href === '/market' ? pathname.startsWith('/market') : pathname === tab.href;
 
         return (
           <TabLink key={tab.href} href={tab.href} active={active}>
