@@ -184,6 +184,12 @@ export default function SettingsPage() {
   }, []);
 
   const requestLive = () => {
+    // Real-money trading is the one feature that requires an account.
+    if (!session) {
+      useUiStore.getState().showToast('실거래는 로그인 후 이용할 수 있습니다.', 'info');
+      router.push('/login');
+      return;
+    }
     if (!status?.configured) {
       useUiStore.getState().showToast('먼저 .env.local 에 Upbit API 키를 설정하세요.', 'danger');
       return;
@@ -319,6 +325,11 @@ export default function SettingsPage() {
           <div>
             <SectionHeader title="서버 엔진 (24시간 무인)" />
             <GlassCard padding={4}>
+              {!session && (
+                <RowDesc style={{ marginBottom: 8 }}>
+                  서버 엔진 상태는 로그인 후 확인할 수 있습니다.
+                </RowDesc>
+              )}
               <KeyValue>
                 <span>상태</span>
                 <Badge tone={engine?.mode === 'live' ? 'up' : 'neutral'}>
@@ -370,15 +381,30 @@ export default function SettingsPage() {
           <div>
             <SectionHeader title="계정" />
             <GlassCard padding={4}>
-              <Row>
-                <RowText>
-                  <RowTitle>로그인 계정</RowTitle>
-                  <RowDesc>{session?.user.email ?? '-'}</RowDesc>
-                </RowText>
-                <Button variant="secondary" size="sm" onClick={() => void handleLogout()}>
-                  로그아웃
-                </Button>
-              </Row>
+              {session ? (
+                <Row>
+                  <RowText>
+                    <RowTitle>로그인 계정</RowTitle>
+                    <RowDesc>{session.user.email}</RowDesc>
+                  </RowText>
+                  <Button variant="secondary" size="sm" onClick={() => void handleLogout()}>
+                    로그아웃
+                  </Button>
+                </Row>
+              ) : (
+                <Row>
+                  <RowText>
+                    <RowTitle>비로그인 (둘러보기)</RowTitle>
+                    <RowDesc>
+                      모의거래는 자유롭게 사용할 수 있어요. 로그인하면 봇/설정이 계정에 저장되고
+                      실거래를 사용할 수 있습니다.
+                    </RowDesc>
+                  </RowText>
+                  <Button variant="primary" size="sm" onClick={() => router.push('/login')}>
+                    로그인
+                  </Button>
+                </Row>
+              )}
             </GlassCard>
           </div>
 

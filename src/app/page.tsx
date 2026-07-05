@@ -204,9 +204,9 @@ export default function OnboardingPage() {
   const router = useRouter();
 
   function handleStart() {
-    // Landing → login. (Already-authenticated visitors are bounced from
-    // /login to /dashboard by the middleware, so one target covers both.)
-    router.push('/login');
+    // Browse freely without an account — login is only required when
+    // switching to real-money (LIVE) trading.
+    router.push('/dashboard');
   }
 
   return (

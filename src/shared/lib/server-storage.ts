@@ -1,18 +1,18 @@
 'use client';
 
 /**
- * zustand persist용 서버 스토리지 어댑터.
+ * zustand persist용 스토리지 어댑터 — 로그인 여부에 따라 이원화.
  *
- * localStorage 대신 /api/state (세션 스코프, SQLite)를 사용한다.
- * - 비로그인 상태: getItem이 null을 돌려주고 스토어는 기본값으로 동작.
- * - 최초 1회 마이그레이션: 서버에 데이터가 없고 예전 localStorage 키가 있으면
- *   그 값을 서버로 올린 뒤 사용한다.
+ * - 로그인 상태: /api/state (세션 스코프, SQLite)에 저장 → 기기 간 동기화.
+ * - 비로그인 상태(401): localStorage로 폴백 → 예전처럼 모의거래를 계정 없이
+ *   자유롭게 쓰고, 봇/설정도 브라우저에 유지된다.
+ * - 로그인 후 서버에 데이터가 없으면 localStorage 값을 1회 서버로 이전한다.
  * - setItem은 짧게 디바운스해 연속 조작(슬라이더 등)의 쓰기 폭주를 막는다.
  */
 
 import type { StateStorage } from 'zustand/middleware';
 
-export function serverStateStorage(key: string, legacyLocalStorageKey?: string): StateStorage {
+export function serverStateStorage(key: string, localStorageKey: string): StateStorage {
   let writeTimer: ReturnType<typeof setTimeout> | null = null;
   let pendingValue: string | null = null;
 
@@ -21,13 +21,22 @@ export function serverStateStorage(key: string, legacyLocalStorageKey?: string):
     const value = pendingValue;
     pendingValue = null;
     try {
-      await fetch('/api/state', {
+      const res = await fetch('/api/state', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ key, value }),
       });
+      if (res.status === 401) {
+        // 비로그인 — 브라우저에 저장 (로그인하면 1회 이전됨).
+        localStorage.setItem(localStorageKey, value);
+      }
     } catch {
-      // Offline / logged out — the next write retries.
+      // 네트워크 오류 — 최소한 로컬에는 남긴다.
+      try {
+        localStorage.setItem(localStorageKey, value);
+      } catch {
+        /* storage full/blocked — drop */
+      }
     }
   };
 
@@ -35,25 +44,34 @@ export function serverStateStorage(key: string, legacyLocalStorageKey?: string):
     getItem: async () => {
       try {
         const res = await fetch(`/api/state?key=${encodeURIComponent(key)}`);
-        if (!res.ok) return null; // 401(비로그인) 등 — 기본값 사용
+        if (res.status === 401) {
+          // 비로그인 — 로컬 값 사용.
+          return localStorage.getItem(localStorageKey);
+        }
+        if (!res.ok) return null;
         const data = (await res.json()) as { value: string | null };
         if (data.value !== null) return data.value;
 
-        // One-time migration from the old localStorage persistence.
-        if (legacyLocalStorageKey) {
-          const legacy = localStorage.getItem(legacyLocalStorageKey);
-          if (legacy) {
-            void fetch('/api/state', {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ key, value: legacy }),
-            }).then(() => localStorage.removeItem(legacyLocalStorageKey));
-            return legacy;
-          }
+        // 로그인됐지만 서버가 비어 있음 → 로컬 데이터 1회 이전.
+        const legacy = localStorage.getItem(localStorageKey);
+        if (legacy) {
+          void fetch('/api/state', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ key, value: legacy }),
+          }).then((r) => {
+            if (r.ok) localStorage.removeItem(localStorageKey);
+          });
+          return legacy;
         }
         return null;
       } catch {
-        return null;
+        // 서버 접근 불가 — 로컬 폴백.
+        try {
+          return localStorage.getItem(localStorageKey);
+        } catch {
+          return null;
+        }
       }
     },
 
@@ -68,6 +86,7 @@ export function serverStateStorage(key: string, legacyLocalStorageKey?: string):
 
     removeItem: async () => {
       try {
+        localStorage.removeItem(localStorageKey);
         await fetch(`/api/state?key=${encodeURIComponent(key)}`, { method: 'DELETE' });
       } catch {
         // ignore

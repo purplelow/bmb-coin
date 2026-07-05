@@ -143,6 +143,14 @@ MarketSimulator ──tick──▶ ExchangeAdapter ──ticker──▶ Tradin
 클라이언트 엔진은 테스트(모의) 모드 전용이라 이중 체결이 없습니다. 하트비트는 설정 화면의
 "서버 엔진" 카드(/api/engine/status)에서 확인. **서버 프로세스(컴퓨터)는 켜져 있어야 합니다.**
 
+24시간 운영은 dev가 아닌 프로덕션 서버로:
+
+```bash
+pnpm trade:24h   # 프로덕션 빌드 → 맥 잠자기 방지(caffeinate) → next start
+```
+
+(터미널을 닫으면 종료됩니다. 상시 운영이 길어지면 클라우드/미니서버 배포가 다음 단계.)
+
 ## 로드맵
 
 - [x] 실거래용 `UpbitExchangeAdapter` (서버 라우트 + JWT) · 소액 하드캡 · 킬스위치
