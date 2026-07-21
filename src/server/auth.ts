@@ -37,6 +37,12 @@ export const enabledSocialProviders = Object.keys(socialProviders);
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, { provider: 'sqlite', schema }),
+  // BETTER_AUTH_URL(localhost) 외에 LAN IP 등 추가 접속 origin 허용.
+  // 쉼표 구분: TRUSTED_ORIGINS=http://192.168.200.134:3000,http://...
+  trustedOrigins: (process.env.TRUSTED_ORIGINS ?? '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean),
   emailAndPassword: {
     enabled: true,
     minPasswordLength: 8,

@@ -46,7 +46,9 @@ export function OrderRow({ order }: OrderRowProps) {
   const koreanName = market?.koreanName ?? order.market;
 
   const isBuy = order.side === 'bid';
-  const executedAmount = order.avgFillPrice * order.executedVolume;
+  // 체결 금액은 거래소가 준 값을 그대로 쓴다. avgFillPrice×수량 재계산은
+  // 시장가 매수(price=지출 총액)에서 금액이 수량배로 뻥튀기되던 버그의 원인.
+  const executedAmount = order.executedFunds ?? order.avgFillPrice * order.executedVolume;
 
   return (
     <ListRow

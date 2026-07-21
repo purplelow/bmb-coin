@@ -10,11 +10,29 @@ import { createUpbitToken } from './signing';
 
 const BASE = 'https://api.upbit.com';
 
-async function publicGet<T>(path: string): Promise<T> {
+// 업비트 공개 API는 IP당 초당 10회 제한. 마켓 화면처럼 캔들 요청이 버스트로
+// 몰리면 초과분이 429로 거절되므로, 시작 시각을 110ms 간격으로 벌려 내보내고
+// 그래도 429를 맞으면 잠시 뒤 재시도한다.
+const PUBLIC_GAP_MS = 110;
+let nextPublicSlot = 0;
+
+async function pacePublic(): Promise<void> {
+  const now = Date.now();
+  const at = Math.max(now, nextPublicSlot);
+  nextPublicSlot = at + PUBLIC_GAP_MS;
+  if (at > now) await new Promise((r) => setTimeout(r, at - now));
+}
+
+async function publicGet<T>(path: string, retries = 2): Promise<T> {
+  await pacePublic();
   const res = await fetch(`${BASE}${path}`, {
     headers: { Accept: 'application/json' },
     cache: 'no-store',
   });
+  if (res.status === 429 && retries > 0) {
+    await new Promise((r) => setTimeout(r, 500));
+    return publicGet(path, retries - 1);
+  }
   if (!res.ok) {
     throw new Error(`Upbit ${path} failed: ${res.status} ${await res.text()}`);
   }
@@ -126,6 +144,34 @@ export async function fetchCandles(market: string, unit: number, count: number):
     .reverse();
 }
 
+interface UpbitOrderbook {
+  market: string;
+  orderbook_units: Array<{ ask_price: number; bid_price: number }>;
+}
+
+export interface OrderbookSpread {
+  market: string;
+  bestBid: number;
+  bestAsk: number;
+  /** (ask - bid) / mid, in percent. 시장가 왕복 시 확정 손실의 하한. */
+  spreadPct: number;
+}
+
+export async function fetchOrderbookSpread(market: string): Promise<OrderbookSpread> {
+  const data = await publicGet<UpbitOrderbook[]>(
+    `/v1/orderbook?markets=${encodeURIComponent(market)}`,
+  );
+  const top = data[0]?.orderbook_units[0];
+  if (!top) throw new Error(`Upbit orderbook empty for ${market}`);
+  const mid = (top.ask_price + top.bid_price) / 2;
+  return {
+    market,
+    bestBid: top.bid_price,
+    bestAsk: top.ask_price,
+    spreadPct: mid > 0 ? ((top.ask_price - top.bid_price) / mid) * 100 : 0,
+  };
+}
+
 // ── Authenticated: account + orders ─────────────────────────────
 
 interface UpbitAccount {
@@ -155,6 +201,8 @@ interface UpbitOrder {
   created_at: string;
   volume: string | null;
   executed_volume: string | null;
+  /** 체결 금액 합(KRW). 구형 응답에는 없을 수 있다. */
+  executed_funds?: string | null;
   paid_fee: string | null;
 }
 
@@ -163,18 +211,71 @@ function mapOrder(o: UpbitOrder): Order {
     o.ord_type === 'price' ? 'price' : o.ord_type === 'market' ? 'market' : 'limit';
   const state: Order['state'] =
     o.state === 'done' ? 'done' : o.state === 'cancel' ? 'cancel' : 'wait';
+
+  const price = o.price ? parseFloat(o.price) : undefined;
+  const executedVolume = o.executed_volume ? parseFloat(o.executed_volume) : 0;
+  const executedFunds = o.executed_funds ? parseFloat(o.executed_funds) : undefined;
+
+  // 평균 체결가: 체결 금액이 있으면 그걸로. 없으면 지정가만 price가 단가라서
+  // 그대로 쓴다. 시장가 매수(ord_type=price)의 price는 "지출한 KRW 총액"이라
+  // 단가가 아니다 — 총액을 수량으로 나눠 근사하고, 시장가 매도는 알 수 없음(0).
+  let avgFillPrice = 0;
+  if (executedFunds !== undefined && executedVolume > 0) {
+    avgFillPrice = executedFunds / executedVolume;
+  } else if (ordType === 'limit' && price !== undefined) {
+    avgFillPrice = price;
+  } else if (ordType === 'price' && price !== undefined && executedVolume > 0) {
+    avgFillPrice = price / executedVolume;
+  }
+
   return {
     id: o.uuid,
     market: o.market,
     side: o.side,
     type: ordType,
-    price: o.price ? parseFloat(o.price) : undefined,
+    price,
     volume: o.volume ? parseFloat(o.volume) : 0,
-    executedVolume: o.executed_volume ? parseFloat(o.executed_volume) : 0,
-    avgFillPrice: o.price ? parseFloat(o.price) : 0,
+    executedVolume,
+    executedFunds:
+      executedFunds ?? (ordType === 'price' && price !== undefined ? price : undefined),
+    avgFillPrice,
     paidFee: o.paid_fee ? parseFloat(o.paid_fee) : 0,
     state,
     createdAt: new Date(o.created_at).getTime(),
+  };
+}
+
+export interface OrderFill {
+  executedVolume: number;
+  /** 체결 금액 합(KRW), 수수료 차감 전. */
+  executedFunds: number;
+  paidFee: number;
+  done: boolean;
+}
+
+interface UpbitOrderDetail extends UpbitOrder {
+  trades?: Array<{ price: string; volume: string; funds: string }>;
+}
+
+/**
+ * 단일 주문의 실제 체결 내역 조회 — 봇 P&L을 추정가가 아닌 실체결가로
+ * 계산하기 위해 쓴다. trades의 funds 합이 가장 정확하고, 없으면
+ * executed_funds로 폴백한다.
+ */
+export async function fetchOrderFill(uuid: string): Promise<OrderFill> {
+  const o = await authGet<UpbitOrderDetail>('/v1/order', { uuid });
+  const executedVolume = o.executed_volume ? parseFloat(o.executed_volume) : 0;
+  let executedFunds = 0;
+  if (o.trades && o.trades.length > 0) {
+    executedFunds = o.trades.reduce((sum, t) => sum + (parseFloat(t.funds) || 0), 0);
+  } else if (o.executed_funds) {
+    executedFunds = parseFloat(o.executed_funds) || 0;
+  }
+  return {
+    executedVolume,
+    executedFunds,
+    paidFee: o.paid_fee ? parseFloat(o.paid_fee) : 0,
+    done: o.state === 'done' || o.state === 'cancel',
   };
 }
 

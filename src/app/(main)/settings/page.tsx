@@ -13,6 +13,7 @@ import {
   SegmentedControl,
   Switch,
   Button,
+  NumberField,
   Badge,
   Icon,
   IconButton,
@@ -304,10 +305,11 @@ export default function SettingsPage() {
 
           {/* Order amount preset */}
           <div>
-            <SectionHeader title="소액 주문 금액" />
+            <SectionHeader title="기본 주문 금액" />
             <GlassCard padding={4}>
               <RowDesc style={{ marginBottom: 12 }}>
-                실거래 1회 주문 금액입니다. 봇 자동매수도 이 금액으로 제한됩니다.
+                실거래 1회 매수 금액의 기본값입니다. 봇에 주문 금액이 설정돼 있으면 봇 값이
+                우선하며, 어떤 매수든 1회/일 한도 안에서만 실행됩니다.
               </RowDesc>
               <SegmentedControl
                 fullWidth
@@ -318,6 +320,17 @@ export default function SettingsPage() {
                   value: String(p),
                 }))}
               />
+              <div style={{ marginTop: 12 }}>
+                <NumberField
+                  label="직접 입력"
+                  value={orderPreset}
+                  onChange={setOrderPreset}
+                  min={5_000}
+                  max={status?.maxOrderKRW ?? 100_000}
+                  step={5_000}
+                  suffix="원"
+                />
+              </div>
             </GlassCard>
           </div>
 
@@ -431,8 +444,8 @@ export default function SettingsPage() {
           <WarnTitle>실제 돈이 사용됩니다</WarnTitle>
           <WarnText>
             지금부터 매수/매도는 업비트 계정의 실제 자금으로 체결됩니다. 1회 최대{' '}
-            {formatKRW(status?.maxOrderKRW ?? 20000)}, 하루 최대{' '}
-            {formatKRW(status?.dailyCapKRW ?? 50000)}로 제한되지만, 손실이 발생할 수 있습니다. 정말
+            {formatKRW(status?.maxOrderKRW ?? 100000)}, 하루 최대{' '}
+            {formatKRW(status?.dailyCapKRW ?? 500000)}로 제한되지만, 손실이 발생할 수 있습니다. 정말
             전환할까요?
           </WarnText>
         </WarnBox>

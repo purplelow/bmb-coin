@@ -21,8 +21,14 @@
 import { and, eq } from 'drizzle-orm';
 import { evaluateStrategy } from '@/features/trading/strategies';
 import { db, schema } from '@/server/db';
-import { fetchBalances, fetchCandles, placeOrder } from '@/server/upbit/client';
-import { assertBuyWithinCaps, recordBuy } from '@/server/upbit/guards';
+import {
+  fetchBalances,
+  fetchCandles,
+  fetchOrderbookSpread,
+  fetchOrderFill,
+  placeOrder,
+} from '@/server/upbit/client';
+import { assertBuyWithinCaps, maxOrderKRW, maxSpreadPct, recordBuy } from '@/server/upbit/guards';
 import { hasUpbitKeys } from '@/server/upbit/signing';
 import { uid } from '@/shared/lib/id';
 import type { Balance, Bot, Signal, SignalEvent } from '@/types/domain';
@@ -233,7 +239,8 @@ async function processBot(
       ? Math.max(bot.strategy.params.longPeriod, bot.strategy.params.shortPeriod) + 5
       : bot.strategy.params.period + 5;
 
-  const candles = await fetchCandles(bot.market, 1, Math.min(lookback, 200));
+  // candleUnit이 없는 구형 봇은 기존 동작(1분봉) 유지.
+  const candles = await fetchCandles(bot.market, bot.candleUnit ?? 1, Math.min(lookback, 200));
   const lastCandle = candles[candles.length - 1];
   if (!lastCandle) return false;
   const currentPrice = lastCandle.close;
@@ -265,7 +272,7 @@ async function processBot(
           volume: qty,
         });
         rs.lastSignal = 'sell';
-        applySellStats(bot, order.paidFee, currentPrice, qty, avgBuyPrice);
+        await settleSell(bot, order.id, currentPrice, qty, avgBuyPrice);
         outSignals.push(makeSignal(bot, 'sell', reason, currentPrice));
         return true;
       } finally {
@@ -286,12 +293,29 @@ async function processBot(
   rs.lastActedCandleTs = lastCandle.timestamp;
 
   if (signal === 'buy' && prev !== 'buy') {
-    // Live safety: auto-buy must be explicitly enabled; amount is clamped to
-    // the small-order preset and re-checked against the server hard caps.
+    // Live safety: auto-buy must be explicitly enabled. 봇에 설정한 주문 금액이
+    // 실제 매수 금액이고(없으면 설정의 기본 주문 금액), 1회 하드캡을 넘으면
+    // 캡까지로 줄여서 산다. 일 한도는 assertBuyWithinCaps가 검사.
     if (!liveAutoBuy) return false;
+
+    // 스프레드 가드: 호가 간격이 넓은 마켓(저가 코인)은 시장가로 사는 순간
+    // 스프레드만큼 손실이 확정된다 — 매수를 건너뛰고 사유를 신호 로그에 남긴다.
+    const spread = await fetchOrderbookSpread(bot.market);
+    if (spread.spreadPct > maxSpreadPct()) {
+      outSignals.push(
+        makeSignal(
+          bot,
+          'hold',
+          `매수 보류 — 호가 스프레드 ${spread.spreadPct.toFixed(2)}% > 한도 ${maxSpreadPct()}%`,
+          currentPrice,
+        ),
+      );
+      return false;
+    }
+
     const amount = Math.min(
       bot.strategy.params.orderAmount ?? orderPreset,
-      orderPreset,
+      maxOrderKRW(),
     );
     if ((krwBalance?.balance ?? 0) < amount) return false;
     assertBuyWithinCaps(amount); // throws CapError when over per-order/daily cap
@@ -315,7 +339,7 @@ async function processBot(
       ord_type: 'market',
       volume: qty,
     });
-    applySellStats(bot, order.paidFee, currentPrice, qty, avgBuyPrice);
+    await settleSell(bot, order.id, currentPrice, qty, avgBuyPrice);
     outSignals.push(makeSignal(bot, 'sell', reason, currentPrice));
     return true;
   }
@@ -323,21 +347,49 @@ async function processBot(
   return false;
 }
 
-function applySellStats(
+/**
+ * 매도 정산 — 실제 체결 내역 기준으로 P&L을 기록한다.
+ *
+ * 시장가 매도는 접수 응답에 체결 정보가 없어서, 잠시 기다렸다 주문 상세를
+ * 조회해 실체결 금액·수량·수수료를 쓴다. 끝내 조회에 실패하면 캔들 종가
+ * 추정으로 폴백한다(종가는 실제 체결가와 달라 P&L이 부정확할 수 있음).
+ */
+async function settleSell(
   bot: Bot,
-  paidFee: number,
-  price: number,
-  qty: number,
+  orderId: string,
+  fallbackPrice: number,
+  requestedQty: number,
   avgBuyPrice: number,
-): void {
-  const proceeds = price * qty - paidFee;
+): Promise<void> {
+  let proceeds = fallbackPrice * requestedQty;
+  let fee = 0;
+  let qty = requestedQty;
+
+  for (let attempt = 0; attempt < 3; attempt++) {
+    await new Promise((r) => setTimeout(r, 1_000));
+    try {
+      const fill = await fetchOrderFill(orderId);
+      if (fill.executedVolume > 0 && fill.executedFunds > 0) {
+        proceeds = fill.executedFunds;
+        fee = fill.paidFee;
+        qty = fill.executedVolume;
+      }
+      if (fill.done) break;
+    } catch {
+      // 일시적 조회 실패 — 재시도 후에도 안 되면 폴백값 사용.
+    }
+  }
+
   const cost = avgBuyPrice * qty;
-  const pnl = proceeds - cost;
+  const pnl = proceeds - fee - cost;
   bot.stats.trades += 1;
   if (pnl > 0) bot.stats.wins += 1;
   else if (pnl < 0) bot.stats.losses += 1;
   bot.stats.realizedPnl += pnl;
-  bot.stats.returnRate = cost > 0 ? bot.stats.realizedPnl / cost : bot.stats.returnRate;
+  // 수익률은 "이번 매도 원가"가 아닌 "누적 투입 원가" 대비 — 매도 한 번의
+  // 원가로 나누면 누적 손익이 수백 %로 부풀어 보인다(기존 버그).
+  bot.stats.totalCost = (bot.stats.totalCost ?? 0) + cost;
+  bot.stats.returnRate = bot.stats.totalCost > 0 ? bot.stats.realizedPnl / bot.stats.totalCost : 0;
 }
 
 function makeSignal(bot: Bot, signal: Signal, reason: string, price: number): SignalEvent {

@@ -4,13 +4,28 @@
  * zustand persist용 스토리지 어댑터 — 로그인 여부에 따라 이원화.
  *
  * - 로그인 상태: /api/state (세션 스코프, SQLite)에 저장 → 기기 간 동기화.
- * - 비로그인 상태(401): localStorage로 폴백 → 예전처럼 모의거래를 계정 없이
- *   자유롭게 쓰고, 봇/설정도 브라우저에 유지된다.
+ * - 비로그인 상태: 세션 확인 후 서버를 아예 치지 않고 localStorage 사용 →
+ *   모의거래를 계정 없이 자유롭게 쓰고, 콘솔에 401 노이즈도 남지 않는다.
  * - 로그인 후 서버에 데이터가 없으면 localStorage 값을 1회 서버로 이전한다.
  * - setItem은 짧게 디바운스해 연속 조작(슬라이더 등)의 쓰기 폭주를 막는다.
  */
 
 import type { StateStorage } from 'zustand/middleware';
+import { authClient } from '@/shared/lib/auth-client';
+
+/**
+ * 세션 여부를 페이지 로드당 1회만 확인한다. get-session은 비로그인이어도
+ * 200을 반환하므로 콘솔에 4xx 노이즈가 남지 않는다. 로그인/로그아웃은 둘 다
+ * 전체 리로드를 하므로(login/settings 페이지) 로드당 1회 캐시로 충분하다.
+ */
+let sessionCheck: Promise<boolean> | null = null;
+function isAuthed(): Promise<boolean> {
+  sessionCheck ??= authClient
+    .getSession()
+    .then(({ data }) => Boolean(data?.session))
+    .catch(() => false);
+  return sessionCheck;
+}
 
 export function serverStateStorage(key: string, localStorageKey: string): StateStorage {
   let writeTimer: ReturnType<typeof setTimeout> | null = null;
@@ -20,6 +35,15 @@ export function serverStateStorage(key: string, localStorageKey: string): StateS
     if (pendingValue === null) return;
     const value = pendingValue;
     pendingValue = null;
+    if (!(await isAuthed())) {
+      // 비로그인 — 서버를 치지 않고 곧장 브라우저에 저장 (로그인하면 1회 이전됨).
+      try {
+        localStorage.setItem(localStorageKey, value);
+      } catch {
+        /* storage full/blocked — drop */
+      }
+      return;
+    }
     try {
       const res = await fetch('/api/state', {
         method: 'PUT',
@@ -27,7 +51,7 @@ export function serverStateStorage(key: string, localStorageKey: string): StateS
         body: JSON.stringify({ key, value }),
       });
       if (res.status === 401) {
-        // 비로그인 — 브라우저에 저장 (로그인하면 1회 이전됨).
+        // 세션이 도중에 만료된 드문 경우 — 로컬에라도 남긴다.
         localStorage.setItem(localStorageKey, value);
       }
     } catch {
@@ -42,10 +66,18 @@ export function serverStateStorage(key: string, localStorageKey: string): StateS
 
   return {
     getItem: async () => {
+      if (!(await isAuthed())) {
+        // 비로그인 — 서버를 치지 않고 로컬 값 사용.
+        try {
+          return localStorage.getItem(localStorageKey);
+        } catch {
+          return null;
+        }
+      }
       try {
         const res = await fetch(`/api/state?key=${encodeURIComponent(key)}`);
         if (res.status === 401) {
-          // 비로그인 — 로컬 값 사용.
+          // 세션이 도중에 만료된 드문 경우 — 로컬 값 사용.
           return localStorage.getItem(localStorageKey);
         }
         if (!res.ok) return null;
@@ -87,7 +119,9 @@ export function serverStateStorage(key: string, localStorageKey: string): StateS
     removeItem: async () => {
       try {
         localStorage.removeItem(localStorageKey);
-        await fetch(`/api/state?key=${encodeURIComponent(key)}`, { method: 'DELETE' });
+        if (await isAuthed()) {
+          await fetch(`/api/state?key=${encodeURIComponent(key)}`, { method: 'DELETE' });
+        }
       } catch {
         // ignore
       }

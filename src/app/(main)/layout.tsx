@@ -1,6 +1,7 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
+import { usePathname } from 'next/navigation';
 import styled from '@emotion/styled';
 import { AppFrame, TestModeBanner, BottomNav } from '@/shared/ui';
 
@@ -22,10 +23,19 @@ const Main = styled.main`
 `;
 
 export default function MainLayout({ children }: MainLayoutProps) {
+  const mainRef = useRef<HTMLElement>(null);
+  const pathname = usePathname();
+
+  // window가 아니라 Main이 스크롤 컨테이너라서 Next의 라우트 스크롤 복원이
+  // 닿지 않는다 — 페이지가 바뀌면 직접 맨 위로 되돌린다.
+  useEffect(() => {
+    mainRef.current?.scrollTo(0, 0);
+  }, [pathname]);
+
   return (
     <AppFrame>
       <TestModeBanner />
-      <Main>{children}</Main>
+      <Main ref={mainRef}>{children}</Main>
       <BottomNav />
     </AppFrame>
   );

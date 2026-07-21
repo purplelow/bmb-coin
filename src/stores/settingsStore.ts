@@ -16,10 +16,13 @@ interface SettingsState {
   orderPreset: number;
   /** Allow live bots to AUTO-BUY. Off by default → live bots only auto-sell. */
   liveAutoBuy: boolean;
+  /** 관심 코인 마켓 코드 목록 (예: 'KRW-BTC'). */
+  watchlist: string[];
 
   setTradingMode: (mode: TradingMode) => void;
   setOrderPreset: (amount: number) => void;
   setLiveAutoBuy: (on: boolean) => void;
+  toggleWatchlist: (code: string) => void;
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -28,10 +31,17 @@ export const useSettingsStore = create<SettingsState>()(
       tradingMode: 'test',
       orderPreset: ORDER_PRESETS[0],
       liveAutoBuy: false,
+      watchlist: [],
 
       setTradingMode: (mode) => set({ tradingMode: mode }),
       setOrderPreset: (amount) => set({ orderPreset: amount }),
       setLiveAutoBuy: (on) => set({ liveAutoBuy: on }),
+      toggleWatchlist: (code) =>
+        set((s) => ({
+          watchlist: s.watchlist.includes(code)
+            ? s.watchlist.filter((c) => c !== code)
+            : [...s.watchlist, code],
+        })),
     }),
     {
       name: 'koinlab-settings',

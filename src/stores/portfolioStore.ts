@@ -2,7 +2,6 @@
 
 import { create } from 'zustand';
 import { getExchangeAdapter } from '@/services/exchange';
-import { SEED_MARKET_BY_CODE } from '@/shared/config/markets';
 import type { Balance, Order, Position } from '@/types/domain';
 import { useMarketStore } from './marketStore';
 
@@ -60,10 +59,11 @@ export function usePositions(): Position[] {
 
     // Find the market code (e.g. KRW-BTC) for this currency
     const marketCode = `KRW-${bal.currency}`;
-    const seedMarket = SEED_MARKET_BY_CODE[marketCode];
-    if (!seedMarket) continue;
-
     const ticker = tickers[marketCode];
+    // 시세도 매수가도 없으면 평가 불가(KRW 마켓 없는 에어드랍 등) — 그때만
+    // 숨긴다. 시드 12종으로 거르면 라이브 보유분이 통째로 누락된다(과거 버그).
+    if (!ticker && bal.avgBuyPrice <= 0) continue;
+
     const currentPrice = ticker?.tradePrice ?? bal.avgBuyPrice;
     const quantity = bal.balance + bal.locked;
     const valuation = quantity * currentPrice;
@@ -108,10 +108,9 @@ export function usePortfolioTotals(): {
     if (bal.balance <= 0 && bal.locked <= 0) continue;
 
     const marketCode = `KRW-${bal.currency}`;
-    const seedMarket = SEED_MARKET_BY_CODE[marketCode];
-    if (!seedMarket) continue;
-
     const ticker = tickers[marketCode];
+    if (!ticker && bal.avgBuyPrice <= 0) continue;
+
     const currentPrice = ticker?.tradePrice ?? bal.avgBuyPrice;
     const quantity = bal.balance + bal.locked;
 

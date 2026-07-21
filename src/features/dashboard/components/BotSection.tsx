@@ -39,7 +39,7 @@ export function BotSection() {
         title="내 자동매매 봇"
         action={
           runningBots.length > 0 ? (
-            <SeeAllLink href="/bots">
+            <SeeAllLink href="/bots" scroll={false}>
               전체 보기
               <Icon name="chevronRight" size={14} />
             </SeeAllLink>
@@ -59,7 +59,7 @@ export function BotSection() {
           description="자동매매 봇을 만들어 24시간 자동으로 거래해보세요."
           icon={<Icon name="bot" size={36} />}
           action={
-            <Link href="/bots">
+            <Link href="/bots" scroll={false}>
               <Button variant="primary" size="md">
                 봇 만들기
               </Button>

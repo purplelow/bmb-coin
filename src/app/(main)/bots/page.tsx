@@ -25,10 +25,6 @@ import type { Bot, BotStatus, SignalEvent } from '@/types/domain';
 
 // ── Styled ─────────────────────────────────────────────────────────
 
-const PageRoot = styled(Screen)`
-  padding-top: 0;
-`;
-
 const BotList = styled.div`
   display: flex;
   flex-direction: column;
@@ -173,16 +169,21 @@ function getStatusLabel(status: BotStatus): string {
 interface BotCardProps {
   bot: Bot;
   onToggle: (id: string, status: BotStatus) => void;
+  onEdit: (bot: Bot) => void;
   onDelete: (id: string) => void;
 }
 
-function BotCard({ bot, onToggle, onDelete }: BotCardProps) {
+function BotCard({ bot, onToggle, onEdit, onDelete }: BotCardProps) {
   const stratDef = STRATEGY_DEFS[bot.strategy.type];
 
   const handleToggle = useCallback(() => {
     const next: BotStatus = bot.status === 'running' ? 'paused' : 'running';
     onToggle(bot.id, next);
   }, [bot.id, bot.status, onToggle]);
+
+  const handleEdit = useCallback(() => {
+    onEdit(bot);
+  }, [bot, onEdit]);
 
   const handleDelete = useCallback(() => {
     onDelete(bot.id);
@@ -220,6 +221,9 @@ function BotCard({ bot, onToggle, onDelete }: BotCardProps) {
               size={36}
             >
               <Icon name={isRunning ? 'pause' : 'play'} size={16} />
+            </IconButton>
+            <IconButton label="수정" onClick={handleEdit} variant="ghost" size={36}>
+              <Icon name="edit" size={16} />
             </IconButton>
             <IconButton label="삭제" onClick={handleDelete} variant="ghost" size={36}>
               <Icon name="trash" size={16} />
@@ -273,13 +277,21 @@ function SignalRow({ event }: SignalRowProps) {
 
 export default function BotsPage() {
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [editingBot, setEditingBot] = useState<Bot | null>(null);
 
   const bots = useBotStore((s) => s.bots);
   const signals = useBotStore((s) => s.signals);
   const setStatus = useBotStore((s) => s.setStatus);
   const removeBot = useBotStore((s) => s.removeBot);
 
-  const openSheet = useCallback(() => setSheetOpen(true), []);
+  const openSheet = useCallback(() => {
+    setEditingBot(null);
+    setSheetOpen(true);
+  }, []);
+  const openEditSheet = useCallback((bot: Bot) => {
+    setEditingBot(bot);
+    setSheetOpen(true);
+  }, []);
   const closeSheet = useCallback(() => setSheetOpen(false), []);
 
   const handleToggle = useCallback(
@@ -310,7 +322,7 @@ export default function BotsPage() {
         }
       />
 
-      <PageRoot>
+      <Screen>
         {bots.length === 0 ? (
           <EmptyState
             title="등록된 봇이 없습니다"
@@ -326,7 +338,13 @@ export default function BotsPage() {
           <>
             <BotList>
               {bots.map((bot) => (
-                <BotCard key={bot.id} bot={bot} onToggle={handleToggle} onDelete={handleDelete} />
+                <BotCard
+                  key={bot.id}
+                  bot={bot}
+                  onToggle={handleToggle}
+                  onEdit={openEditSheet}
+                  onDelete={handleDelete}
+                />
               ))}
             </BotList>
 
@@ -344,10 +362,15 @@ export default function BotsPage() {
             <Spacer h={4} />
           </>
         )}
-      </PageRoot>
+      </Screen>
 
-      <Sheet open={sheetOpen} onClose={closeSheet} title="새 봇 만들기">
-        <CreateBotForm onClose={closeSheet} />
+      <Sheet open={sheetOpen} onClose={closeSheet} title={editingBot ? '봇 수정' : '새 봇 만들기'}>
+        {/* key로 대상이 바뀔 때마다 폼 state를 새로 초기화한다 */}
+        <CreateBotForm
+          key={editingBot?.id ?? 'new'}
+          bot={editingBot ?? undefined}
+          onClose={closeSheet}
+        />
       </Sheet>
     </>
   );

@@ -5,9 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "next dev",
+    "dev:safe": "NEXT_DIST_DIR=.next-dev next dev -p 3001",
     "build": "next build",
     "start": "next start",
-    "trade:24h": "next build && caffeinate -is next start",
+    "trade:24h": "bash scripts/trade-24h.sh",
+    "tunnel": "cloudflared tunnel --url http://localhost:3000",
+    "upbit:check": "node scripts/check-upbit.mjs",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",

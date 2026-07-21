@@ -85,6 +85,8 @@ export interface Order {
   /** Requested volume in base asset. */
   volume: number;
   executedVolume: number;
+  /** Total executed amount in quote currency, when the exchange reports it. */
+  executedFunds?: number;
   /** Average fill price. */
   avgFillPrice: number;
   /** Fee paid in quote currency. */
@@ -159,6 +161,8 @@ export interface BotStats {
   losses: number;
   /** Realized P&L in quote currency. */
   realizedPnl: number;
+  /** Cumulative cost basis of closed sells — denominator for returnRate. */
+  totalCost?: number;
   /** Fractional return vs deployed capital. */
   returnRate: number;
 }
@@ -181,6 +185,11 @@ export interface Bot {
   name: string;
   market: string;
   strategy: StrategyParams;
+  /**
+   * Candle interval in minutes the strategy evaluates on (1|5|15|60).
+   * Absent on bots created before this field existed — treat as 1.
+   */
+  candleUnit?: number;
   /** Optional stop-loss / take-profit rules. */
   risk?: RiskParams;
   status: BotStatus;

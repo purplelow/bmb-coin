@@ -25,6 +25,7 @@ interface BotState {
     market: string;
     strategy: StrategyParams;
     risk?: RiskParams;
+    candleUnit?: number;
   }) => Bot;
   updateBot: (id: string, patch: Partial<Bot>) => void;
   removeBot: (id: string) => void;
@@ -48,6 +49,7 @@ export const useBotStore = create<BotState>()(
           market: input.market,
           strategy: input.strategy,
           risk: input.risk,
+          candleUnit: input.candleUnit,
           status: 'running',
           createdAt: Date.now(),
           stats: {

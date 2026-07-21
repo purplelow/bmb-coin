@@ -16,8 +16,8 @@
 - **서버 엔진** `src/server/engine/runner.ts` — instrumentation.ts가 서버 부팅 시 기동, 20초 틱.
   DB에서 봇/설정 읽음 → 손절/익절 먼저 → 전략(MA cross/RSI) 신호 → 서버에서 직접 업비트 주문.
   클라이언트 엔진은 테스트 모드 전용(이중 체결 방지). 하트비트: /api/engine/status + 설정 화면 카드
-- **안전장치(서버 강제)**: 1회 ₩20,000 / 일 ₩50,000 하드캡(env), 봇 자동매수 기본 OFF(매도만),
-  소액 프리셋(5k/10k/20k), 킬스위치, 주문 API 세션 필수
+- **안전장치(서버 강제)**: 1회 ₩100,000 / 일 ₩500,000 하드캡(env), 봇 자동매수 기본 OFF(매도만),
+  기본 주문 금액(프리셋 5k/10k/20k + 직접 입력, 봇별 주문 금액이 우선), 킬스위치, 주문 API 세션 필수
 - **인증**: better-auth, MAX_USERS=1 (첫 가입자=운영자, 현재 **가입자 0명 — 슬롯 비어 있음**).
   로그인은 옵션 — 비로그인 = 모의거래 전체 + localStorage 저장, 로그인 = DB 저장 + 실거래
 - **DB**: 루트 `koinlab.db` (SQLite, gitignore). user/session/account/verification + userData(봇·설정 JSON)
@@ -30,7 +30,7 @@
 - [ ] 원화 입금 (5~10만원 권장; 봇 한도상 그 이상 불필요)
 - [ ] **Open API 키 발급** — PC웹, 권한: 자산조회+주문조회+주문하기 **만** (입금/출금 금지),
       허용 IP: **58.143.169.44** (맥북/미니가 같은 집 네트워크면 동일; `curl ifconfig.me`로 재확인)
-- [ ] 키를 `.env.local`의 UPBIT_ACCESS_KEY / UPBIT_SECRET_KEY에 입력 → 서버 재시작
+- [ ] 키를 `.env.local`의 UPBIT_ACCESS_KEY / UPBIT_SECRET_KEY에 입력 → `pnpm upbit:check`로 검증 → 서버 재시작
 - [ ] 앱에서 회원가입(첫 계정) → 설정에서 LIVE ON → 봇 생성 → (선택) 자동매수 허용 ON
 - 24시간 운영: `pnpm trade:24h` (빌드+caffeinate+prod 서버)
 
@@ -58,6 +58,10 @@
 
 ```bash
 pnpm dev          # 개발
-pnpm trade:24h    # 24시간 운영 (빌드+caffeinate+start)
+pnpm trade:24h    # 24시간 운영 (빌드+Cloudflare 터널+caffeinate+start)
+pnpm tunnel       # 터널만 따로 (외부 접속용 임시 URL)
 pnpm lint / typecheck / format
 ```
+
+- 외부 접속: quick tunnel(무료, 계정 불필요) — **재시작마다 URL 바뀜**, 현재 주소는 `cat .tunnel/url.txt`
+- 영구 주소 원하면: Cloudflare 계정+도메인 필요 (named tunnel) — 아직 안 함

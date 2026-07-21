@@ -12,12 +12,22 @@
 
 export function maxOrderKRW(): number {
   const v = Number(process.env.UPBIT_MAX_ORDER_KRW);
-  return Number.isFinite(v) && v > 0 ? v : 20_000;
+  return Number.isFinite(v) && v > 0 ? v : 100_000;
 }
 
 export function dailyCapKRW(): number {
   const v = Number(process.env.UPBIT_DAILY_CAP_KRW);
-  return Number.isFinite(v) && v > 0 ? v : 50_000;
+  return Number.isFinite(v) && v > 0 ? v : 500_000;
+}
+
+/**
+ * 매수 허용 최대 호가 스프레드(%). 저가 코인(예: 115원짜리 DOGE)은 호가
+ * 1틱이 0.9%라 시장가 왕복만으로 그만큼 손실이 확정된다 — 스프레드가 이
+ * 값을 넘는 마켓에서는 엔진이 매수를 건너뛴다.
+ */
+export function maxSpreadPct(): number {
+  const v = Number(process.env.UPBIT_MAX_SPREAD_PCT);
+  return Number.isFinite(v) && v > 0 ? v : 0.3;
 }
 
 interface Ledger {

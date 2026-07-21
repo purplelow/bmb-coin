@@ -15,6 +15,9 @@ import { useSettingsStore } from './settingsStore';
  * - live mode: only auto-buy when the user has explicitly enabled it, and clamp
  *   every buy to the small-amount preset.
  */
+/** 실시간 티커를 구독할 거래대금 상위 마켓 수. */
+const TICKER_SUBSCRIBE_TOP = 50;
+
 const enginePolicy: EnginePolicy = {
   canAutoBuy: () => {
     const s = useSettingsStore.getState();
@@ -30,15 +33,37 @@ const enginePolicy: EnginePolicy = {
  *  current adapter. Returns a teardown that fully unwinds it. */
 function startSession(): () => void {
   const adapter = getExchangeAdapter();
-  const allMarketCodes = SEED_MARKETS.map((m) => m.code);
   const isTest = useSettingsStore.getState().tradingMode === 'test';
 
-  void useMarketStore.getState().init();
-  void usePortfolioStore.getState().refresh();
-
-  const unsubTickers = adapter.subscribeTickers(allMarketCodes, (t) => {
-    useMarketStore.getState().applyTicker(t);
-  });
+  // 마켓 목록 로드 후 실시간 티커 구독. 전체(~270종)를 다 구독하면 웹소켓
+  // 체결 스트림이 과해서, 실제로 화면에 살아 움직여야 하는 것만 구독한다:
+  // 거래대금 상위 + 시드 + 관심 + 보유. 나머지 행은 부팅 시 스냅샷 가격을
+  // 보여주고, 상세 화면 진입 시 그 마켓만 별도 구독으로 실시간이 된다.
+  let stopped = false;
+  let unsubTickers: (() => void) | null = null;
+  // 잔고를 먼저(동시에) 불러와야 아래 held 계산에 보유 코인이 잡힌다 —
+  // init()만 기다리면 보유 코인 티커가 구독에서 빠져 시세가 멈춰 보인다.
+  const firstRefresh = usePortfolioStore.getState().refresh();
+  void Promise.all([useMarketStore.getState().init(), firstRefresh])
+    .then(() => {
+      if (stopped) return;
+      const loaded = useMarketStore.getState().markets.map((m) => m.code); // 거래대금순
+      const held = usePortfolioStore
+        .getState()
+        .balances.filter((b) => b.currency !== 'KRW' && b.balance + b.locked > 0)
+        .map((b) => `KRW-${b.currency}`);
+      const codes = [
+        ...new Set([
+          ...loaded.slice(0, TICKER_SUBSCRIBE_TOP),
+          ...SEED_MARKETS.map((m) => m.code),
+          ...useSettingsStore.getState().watchlist,
+          ...held,
+        ]),
+      ];
+      unsubTickers = adapter.subscribeTickers(codes.length > 0 ? codes : loaded, (t) => {
+        useMarketStore.getState().applyTicker(t);
+      });
+    });
 
   const refreshInterval = setInterval(() => {
     void usePortfolioStore.getState().refresh();
@@ -72,8 +97,9 @@ function startSession(): () => void {
   }
 
   return () => {
+    stopped = true;
     engineTeardown?.();
-    unsubTickers();
+    unsubTickers?.();
     clearInterval(refreshInterval);
   };
 }

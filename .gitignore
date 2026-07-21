@@ -5,6 +5,7 @@
 
 # next.js
 /.next/
+/.next-dev/
 /out/
 next-env.d.ts
 
@@ -37,3 +38,6 @@ yarn-error.log*
 # local database
 koinlab.db*
 drizzle/
+
+# cloudflare tunnel (주소/로그 — 재시작마다 바뀜)
+.tunnel/

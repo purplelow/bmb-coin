@@ -7,6 +7,12 @@
       "runtimeArgs": ["dev"],
       "port": 3000,
       "autoPort": true
+    },
+    {
+      "name": "dev-safe",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["run", "dev:safe"],
+      "port": 3001
     }
   ]
 }

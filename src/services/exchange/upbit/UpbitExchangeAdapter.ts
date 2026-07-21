@@ -8,7 +8,6 @@
 
 import type { ExchangeAdapter, PlaceOrderInput, TickerListener } from '@/services/exchange/types';
 import { UpbitTickerSocket } from '@/services/exchange/upbit/UpbitTickerSocket';
-import { SEED_MARKET_BY_CODE } from '@/shared/config/markets';
 import type { Balance, Candle, Market, Order, Ticker } from '@/types/domain';
 
 /** Poll interval for the live ticker stream (ms). Conservative to respect rate limits. */
@@ -27,10 +26,10 @@ async function getJson<T>(url: string): Promise<T> {
 export class UpbitExchangeAdapter implements ExchangeAdapter {
   readonly id = 'upbit';
 
-  async getMarkets(): Promise<Market[]> {
-    const all = await getJson<Market[]>('/api/upbit/markets');
-    // Keep the same curated coin set as test mode (and keep polling light).
-    return all.filter((m) => SEED_MARKET_BY_CODE[m.code] !== undefined);
+  getMarkets(): Promise<Market[]> {
+    // 전체 KRW 마켓. 티커는 한 요청/한 소켓에 전 종목이 실리므로 부담이 없고,
+    // 무거운 캔들 프리로드는 marketStore가 상위 일부로 제한한다.
+    return getJson<Market[]>('/api/upbit/markets');
   }
 
   getTickers(markets: string[]): Promise<Ticker[]> {

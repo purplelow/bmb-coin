@@ -124,7 +124,7 @@ export function BottomNav() {
           tab.href === '/market' ? pathname.startsWith('/market') : pathname === tab.href;
 
         return (
-          <TabLink key={tab.href} href={tab.href} active={active}>
+          <TabLink key={tab.href} href={tab.href} active={active} scroll={false}>
             <IconWrapper active={active}>
               <Icon name={tab.icon} size={20} />
             </IconWrapper>

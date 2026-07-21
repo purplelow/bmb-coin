@@ -32,7 +32,7 @@ const MA_CROSS_DEFAULT: StrategyParams = {
   params: {
     shortPeriod: 7,
     longPeriod: 25,
-    orderAmount: 500_000,
+    orderAmount: 100_000,
   },
 };
 
@@ -42,7 +42,7 @@ const RSI_DEFAULT: StrategyParams = {
     period: 14,
     oversold: 30,
     overbought: 70,
-    orderAmount: 500_000,
+    orderAmount: 100_000,
   },
 };
 

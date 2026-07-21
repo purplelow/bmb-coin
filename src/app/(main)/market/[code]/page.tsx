@@ -5,9 +5,11 @@ import { useParams, useRouter } from 'next/navigation';
 import styled from '@emotion/styled';
 import { PriceChart } from '@/features/market/components/PriceChart';
 import { TradePanel } from '@/features/market/components/TradePanel';
+import { getExchangeAdapter } from '@/services/exchange';
 import { formatPrice, formatKRW } from '@/shared/lib/format';
 import { AppHeader, IconButton, Icon, GlassCard, StatTile, ValueChange } from '@/shared/ui';
 import { useMarketStore, useTicker } from '@/stores/marketStore';
+import { useSettingsStore } from '@/stores/settingsStore';
 
 const PageWrapper = styled.div`
   display: flex;
@@ -52,6 +54,11 @@ const HeaderPrice = styled.span`
   line-height: 1.2;
 `;
 
+const StarWrap = styled.span<{ active: boolean }>`
+  display: inline-flex;
+  color: ${({ active, theme }) => (active ? theme.color.accent.primary : theme.color.text.low)};
+`;
+
 const StatsGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -78,12 +85,24 @@ export default function MarketDetailPage() {
   const candles = useMarketStore((s) => s.candles[code]);
   const loadCandles = useMarketStore((s) => s.loadCandles);
   const ticker = useTicker(code);
+  const watched = useSettingsStore((s) => s.watchlist.includes(code));
+  const toggleWatchlist = useSettingsStore((s) => s.toggleWatchlist);
 
   useEffect(() => {
     if (code && !candles) {
       void loadCandles(code);
     }
   }, [code, candles, loadCandles]);
+
+  // 전역 구독(거래대금 상위 위주)에 없는 마켓도 상세에서는 실시간이어야 한다
+  // — 이 마켓 하나만 보는 동안 별도 구독을 붙인다.
+  useEffect(() => {
+    if (!code) return;
+    const adapter = getExchangeAdapter();
+    return adapter.subscribeTickers([code], (t) => {
+      useMarketStore.getState().applyTicker(t);
+    });
+  }, [code]);
 
   const tradePrice = ticker?.tradePrice ?? 0;
   const signedChangeRate = ticker?.signedChangeRate ?? 0;
@@ -117,6 +136,17 @@ export default function MarketDetailPage() {
               {formatPrice(tradePrice)} <ValueChange rate={signedChangeRate} size="sm" />
             </HeaderPrice>
           </HeaderTitleWrapper>
+        }
+        right={
+          <IconButton
+            label={watched ? '관심 해제' : '관심 등록'}
+            onClick={() => toggleWatchlist(code)}
+            variant="ghost"
+          >
+            <StarWrap active={watched}>
+              <Icon name={watched ? 'starFilled' : 'star'} size={20} />
+            </StarWrap>
+          </IconButton>
         }
       />
 

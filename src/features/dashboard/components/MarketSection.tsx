@@ -70,7 +70,7 @@ export function MarketSection() {
       <SectionHeader
         title="실시간 마켓"
         action={
-          <SeeAllLink href="/market">
+          <SeeAllLink href="/market" scroll={false}>
             전체 보기
             <Icon name="chevronRight" size={14} />
           </SeeAllLink>

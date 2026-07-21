@@ -15,7 +15,7 @@ const Form = styled.form`
 `;
 
 const HelperText = styled.p`
-  margin: -${({ theme }) => theme.space(2)} 0 0;
+  margin: ${({ theme }) => theme.space(1.5)} 0 0;
   font-size: ${({ theme }) => theme.font.size.xs};
   color: ${({ theme }) => theme.color.text.low};
 `;

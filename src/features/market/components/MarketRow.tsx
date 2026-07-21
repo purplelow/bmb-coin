@@ -10,7 +10,8 @@ interface MarketRowProps {
   market: Market;
   ticker: Ticker | undefined;
   candles: Candle[] | undefined;
-  onClick: () => void;
+  /** 마켓 코드를 넘겨받는 안정된 콜백 — memo가 깨지지 않도록 참조를 유지할 것. */
+  onClick: (code: string) => void;
 }
 
 const Row = styled.div`
@@ -76,7 +77,14 @@ const SparklineWrapper = styled.div`
   justify-content: center;
 `;
 
-export function MarketRow({ market, ticker, candles, onClick }: MarketRowProps) {
+// memo: 시세가 갱신된 행만 다시 그린다 — 목록이 길어질수록(전체 KRW 마켓)
+// 페이지 리렌더 비용이 커서 필수. ticker/candles는 마켓별 참조가 유지된다.
+export const MarketRow = React.memo(function MarketRow({
+  market,
+  ticker,
+  candles,
+  onClick,
+}: MarketRowProps) {
   const closes = candles?.map((c) => c.close) ?? [];
   const tradePrice = ticker?.tradePrice ?? 0;
   const signedChangeRate = ticker?.signedChangeRate ?? 0;
@@ -85,7 +93,7 @@ export function MarketRow({ market, ticker, candles, onClick }: MarketRowProps) 
     signedChangeRate > 0 ? '#2FE6A8' : signedChangeRate < 0 ? '#FF5B73' : '#98A0B3';
 
   return (
-    <Row onClick={onClick}>
+    <Row onClick={() => onClick(market.code)}>
       <CoinIcon symbol={market.base} size={40} />
       <Content>
         <Name>{market.koreanName}</Name>
@@ -102,4 +110,4 @@ export function MarketRow({ market, ticker, candles, onClick }: MarketRowProps) 
       </RightSlot>
     </Row>
   );
-}
+});
